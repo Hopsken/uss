@@ -1,0 +1,41 @@
+:root {
+  --color-primary: #0ea5e9;
+  --color-secondary: #f59e0b;
+  --color-neutral: #0f172a;
+  --font-heading: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.uss-main-content {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding-top: 56px;
+}
+
+@media (min-width: 48em) {
+  .uss-main-content {
+    padding-top: 0;
+  }
+}

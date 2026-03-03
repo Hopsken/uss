@@ -15,25 +15,25 @@ import {
 } from '@mantine/core'
 import { useDisclosure, useMediaQuery } from '@mantine/hooks'
 import {
-  IconActivity,
-  IconBolt,
-  IconChartBar,
-  IconLayoutDashboard,
-  IconListCheck,
-  IconPuzzle,
-  IconRobot,
-  IconSettings,
-} from '@tabler/icons-react'
+  Activity,
+  BarChart3,
+  Bot,
+  LayoutDashboard,
+  ListTodo,
+  Puzzle,
+  Radio,
+  Settings,
+} from 'lucide-react'
 import type { NavItem } from './types'
 
 const ICON_MAP = {
-  bridge: IconLayoutDashboard,
-  agents: IconRobot,
-  tasks: IconListCheck,
-  activity: IconActivity,
-  usage: IconChartBar,
-  skills: IconPuzzle,
-  settings: IconSettings,
+  bridge: LayoutDashboard,
+  agents: Bot,
+  tasks: ListTodo,
+  activity: Activity,
+  usage: BarChart3,
+  skills: Puzzle,
+  settings: Settings,
 }
 
 function NavButton({
@@ -45,7 +45,7 @@ function NavButton({
   collapsed: boolean
   onNavigate?: (href: string) => void
 }) {
-  const Icon = ICON_MAP[item.label.toLowerCase() as keyof typeof ICON_MAP] ?? IconLayoutDashboard
+  const Icon = ICON_MAP[item.label.toLowerCase() as keyof typeof ICON_MAP] ?? LayoutDashboard
 
   const content = (
     <UnstyledButton
@@ -63,7 +63,7 @@ function NavButton({
         fontWeight: item.isActive ? 600 : 500,
       }}
     >
-      <Icon size={16} stroke={1.8} />
+      <Icon size={16} />
       {!collapsed && <Text size="sm" fw={600} ff="Space Grotesk, system-ui, sans-serif">{item.label}</Text>}
     </UnstyledButton>
   )
@@ -116,7 +116,7 @@ export function MainNav({
       >
         <Group justify={collapsed ? 'center' : 'flex-start'} px={collapsed ? 0 : 'xs'} py="xs" mb="sm">
           <ActionIcon variant="light" color="sky" radius="xl">
-            <IconBolt size={16} />
+            <Radio size={16} />
           </ActionIcon>
           {!collapsed && (
             <Text fw={700} ff="Space Grotesk, system-ui, sans-serif" size="lg" c="slate.9">
@@ -165,7 +165,7 @@ export function MainNav({
         <Group h="100%" justify="space-between">
           <Group gap="xs">
             <ActionIcon variant="light" color="sky" radius="xl">
-              <IconBolt size={16} />
+              <Radio size={16} />
             </ActionIcon>
             <Text fw={700} ff="Space Grotesk, system-ui, sans-serif" size="lg" c="slate.9">
               USS
@@ -196,7 +196,7 @@ export function MainNav({
                 color="sky"
                 justify="flex-start"
                 leftSection={(() => {
-                  const Icon = ICON_MAP[item.label.toLowerCase() as keyof typeof ICON_MAP] ?? IconLayoutDashboard
+                  const Icon = ICON_MAP[item.label.toLowerCase() as keyof typeof ICON_MAP] ?? LayoutDashboard
                   return <Icon size={16} />
                 })()}
                 onClick={() => navigate(item.href)}
@@ -211,7 +211,7 @@ export function MainNav({
                   variant={settingsItem.isActive ? 'light' : 'subtle'}
                   color="sky"
                   justify="flex-start"
-                  leftSection={<IconSettings size={16} />}
+                  leftSection={<Settings size={16} />}
                   onClick={() => navigate(settingsItem.href)}
                 >
                   {settingsItem.label}

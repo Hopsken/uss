@@ -1,0 +1,103 @@
+{
+  "_meta": {
+    "models": {
+      "UsageSummary": "Top-level aggregated metrics for the selected time period: total cost, tokens, conversations, and task runs.",
+      "TimeSeriesPoint": "A single day's usage snapshot — date, total cost, and total tokens. Used to render the time series chart.",
+      "AgentUsage": "Per-agent usage breakdown for the selected period: cost, tokens, conversations, and task runs.",
+      "ModelUsage": "Per-model usage breakdown for the selected period — aggregates all agents using that model."
+    },
+    "relationships": [
+      "AgentUsage belongs to an Agent (via agentId/agentName)",
+      "UsageSummary is the sum of all AgentUsage records",
+      "TimeSeriesPoint aggregates all agents for that day",
+      "ModelUsage aggregates all AgentUsage records that share the same model"
+    ]
+  },
+  "activeTimeRange": "this_month",
+  "summary": {
+    "totalCost": 10.88,
+    "totalTokens": 518300,
+    "conversationCount": 45,
+    "taskRunCount": 46
+  },
+  "timeSeries": [
+    { "date": "2026-02-22", "cost": 1.84, "tokens": 78200 },
+    { "date": "2026-02-23", "cost": 2.10, "tokens": 92000 },
+    { "date": "2026-02-24", "cost": 3.20, "tokens": 115200 },
+    { "date": "2026-02-25", "cost": 1.95, "tokens": 88400 },
+    { "date": "2026-02-26", "cost": 4.44, "tokens": 186000 },
+    { "date": "2026-02-27", "cost": 3.92, "tokens": 162800 },
+    { "date": "2026-02-28", "cost": 2.76, "tokens": 118400 },
+    { "date": "2026-03-01", "cost": 3.42, "tokens": 158400 },
+    { "date": "2026-03-02", "cost": 4.88, "tokens": 224600 },
+    { "date": "2026-03-03", "cost": 2.58, "tokens": 135300 }
+  ],
+  "modelBreakdown": [
+    {
+      "modelId": "claude-haiku-4-5",
+      "modelName": "Claude Haiku 4.5",
+      "cost": 2.18,
+      "totalTokens": 318800,
+      "conversationCount": 26,
+      "taskRunCount": 27
+    },
+    {
+      "modelId": "claude-sonnet-4-6",
+      "modelName": "Claude Sonnet 4.6",
+      "cost": 4.58,
+      "totalTokens": 156700,
+      "conversationCount": 13,
+      "taskRunCount": 14
+    },
+    {
+      "modelId": "claude-opus-4-6",
+      "modelName": "Claude Opus 4.6",
+      "cost": 4.12,
+      "totalTokens": 42800,
+      "conversationCount": 6,
+      "taskRunCount": 5
+    }
+  ],
+  "agents": [
+    {
+      "agentId": "gumbo",
+      "agentName": "Gumbo",
+      "cost": 1.24,
+      "totalTokens": 184200,
+      "conversationCount": 18,
+      "taskRunCount": 12
+    },
+    {
+      "agentId": "bernard",
+      "agentName": "Bernard",
+      "cost": 4.12,
+      "totalTokens": 42800,
+      "conversationCount": 6,
+      "taskRunCount": 5
+    },
+    {
+      "agentId": "vale",
+      "agentName": "Vale",
+      "cost": 2.88,
+      "totalTokens": 98500,
+      "conversationCount": 9,
+      "taskRunCount": 8
+    },
+    {
+      "agentId": "claw",
+      "agentName": "Claw",
+      "cost": 0.94,
+      "totalTokens": 134600,
+      "conversationCount": 8,
+      "taskRunCount": 15
+    },
+    {
+      "agentId": "scout",
+      "agentName": "Scout",
+      "cost": 1.70,
+      "totalTokens": 58200,
+      "conversationCount": 4,
+      "taskRunCount": 6
+    }
+  ]
+}

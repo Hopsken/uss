@@ -1,0 +1,192 @@
+{
+  "_meta": {
+    "models": {
+      "Agent": "An OpenClaw agent with a fixed role and model. Shown as a compact status card on the Bridge.",
+      "RecentTaskRun": "A recent execution of a scheduled or manual task, showing which agent ran it, the outcome, and when.",
+      "ProviderStatus": "The connectivity and health status of an AI model provider (e.g., Anthropic, OpenAI).",
+      "SystemHealth": "The overall health of the OpenClaw system — process uptime, providers, and recent error log.",
+      "UsageSnapshot": "Aggregated cost and token usage for today and this week."
+    },
+    "relationships": [
+      "Each RecentTaskRun belongs to one Agent",
+      "SystemHealth contains many ProviderStatuses and a list of recent error events",
+      "UsageSnapshot is a computed summary, not tied to individual agents"
+    ]
+  },
+
+  "agents": [
+    {
+      "id": "claw",
+      "name": "Claw",
+      "role": "Admin",
+      "avatarUrl": null,
+      "model": "claude-opus-4.6",
+      "status": "busy",
+      "currentTask": "Budget check"
+    },
+    {
+      "id": "bernard",
+      "name": "Bernard",
+      "role": "Developer",
+      "avatarUrl": null,
+      "model": "claude-opus-4.6",
+      "status": "idle",
+      "currentTask": null
+    },
+    {
+      "id": "vale",
+      "name": "Vale",
+      "role": "Marketer",
+      "avatarUrl": null,
+      "model": "claude-sonnet-4.5",
+      "status": "busy",
+      "currentTask": "Content Radar Scan"
+    },
+    {
+      "id": "gumbo",
+      "name": "Gumbo",
+      "role": "Assistant",
+      "avatarUrl": null,
+      "model": "claude-sonnet-4.5",
+      "status": "idle",
+      "currentTask": null
+    }
+  ],
+
+  "recentTaskRuns": [
+    {
+      "id": "run-001",
+      "taskName": "Budget check",
+      "agentId": "claw",
+      "agentName": "Claw",
+      "status": "running",
+      "startedAt": "2026-03-03T08:42:00Z",
+      "completedAt": null,
+      "error": null
+    },
+    {
+      "id": "run-002",
+      "taskName": "Daily code activity processing",
+      "agentId": "bernard",
+      "agentName": "Bernard",
+      "status": "completed",
+      "startedAt": "2026-03-03T03:00:00Z",
+      "completedAt": "2026-03-03T03:04:22Z",
+      "error": null
+    },
+    {
+      "id": "run-003",
+      "taskName": "Content Radar Scan",
+      "agentId": "vale",
+      "agentName": "Vale",
+      "status": "running",
+      "startedAt": "2026-03-03T06:00:00Z",
+      "completedAt": null,
+      "error": null
+    },
+    {
+      "id": "run-004",
+      "taskName": "Intake processing",
+      "agentId": "gumbo",
+      "agentName": "Gumbo",
+      "status": "completed",
+      "startedAt": "2026-03-02T19:00:00Z",
+      "completedAt": "2026-03-02T19:07:11Z",
+      "error": null
+    },
+    {
+      "id": "run-005",
+      "taskName": "Weekly rollup",
+      "agentId": "gumbo",
+      "agentName": "Gumbo",
+      "status": "failed",
+      "startedAt": "2026-03-02T16:00:00Z",
+      "completedAt": "2026-03-02T16:01:04Z",
+      "error": "Rate limit exceeded on claude-sonnet-4.5"
+    },
+    {
+      "id": "run-006",
+      "taskName": "Update openclaw",
+      "agentId": "claw",
+      "agentName": "Claw",
+      "status": "completed",
+      "startedAt": "2026-03-02T14:00:00Z",
+      "completedAt": "2026-03-02T14:12:47Z",
+      "error": null
+    },
+    {
+      "id": "run-007",
+      "taskName": "Content Development",
+      "agentId": "vale",
+      "agentName": "Vale",
+      "status": "completed",
+      "startedAt": "2026-03-02T08:00:00Z",
+      "completedAt": "2026-03-02T08:09:33Z",
+      "error": null
+    }
+  ],
+
+  "systemHealth": {
+    "openclaw": {
+      "status": "running",
+      "uptimeSeconds": 432000,
+      "version": "0.9.4"
+    },
+    "providers": [
+      {
+        "id": "anthropic",
+        "name": "Anthropic",
+        "status": "healthy",
+        "latencyMs": 312,
+        "models": ["claude-opus-4.6", "claude-sonnet-4.5", "claude-haiku-4.5"]
+      },
+      {
+        "id": "openai",
+        "name": "OpenAI",
+        "status": "healthy",
+        "latencyMs": 428,
+        "models": ["gpt-4o", "gpt-4o-mini"]
+      },
+      {
+        "id": "minimax",
+        "name": "Minimax (local)",
+        "status": "degraded",
+        "latencyMs": 1840,
+        "models": ["minimax-text-01"]
+      }
+    ],
+    "recentErrors": [
+      {
+        "id": "err-001",
+        "level": "error",
+        "message": "Rate limit exceeded on claude-sonnet-4.5",
+        "agentId": "gumbo",
+        "agentName": "Gumbo",
+        "taskName": "Weekly rollup",
+        "occurredAt": "2026-03-02T16:01:04Z"
+      },
+      {
+        "id": "err-002",
+        "level": "warning",
+        "message": "Minimax response latency above 1500ms threshold",
+        "agentId": null,
+        "agentName": null,
+        "taskName": null,
+        "occurredAt": "2026-03-03T07:15:30Z"
+      }
+    ]
+  },
+
+  "usageSnapshot": {
+    "today": {
+      "costUsd": 1.24,
+      "tokens": 312000,
+      "conversations": 4
+    },
+    "thisWeek": {
+      "costUsd": 9.88,
+      "tokens": 1900000,
+      "conversations": 28
+    }
+  }
+}

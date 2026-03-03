@@ -1,0 +1,249 @@
+{
+  "_meta": {
+    "models": {
+      "Skill": "A discrete capability that an agent can invoke — e.g. web search, calendar access, or code tools. Has a category, toggle state, config fields, last-used timestamp, and a SKILL.md instructions document.",
+      "SkillConfig": "A single configuration field for a skill — label, current value, and whether it's a secret (masked in the UI).",
+      "AgentSkillGroup": "A grouping of skills assigned to a specific agent, used to render the agent sections in the Skills list.",
+      "SystemSkill": "A global skill not tied to any agent — available system-wide."
+    },
+    "relationships": [
+      "Skill belongs to either an Agent (via agentId) or the system (agentId = null)",
+      "Skill has many SkillConfig entries",
+      "AgentSkillGroup contains many Skills for one Agent"
+    ]
+  },
+  "systemSkills": [
+    {
+      "id": "sk-sys-001",
+      "name": "Shell Executor",
+      "description": "Runs shell commands and scripts on the host machine. Used by Claw for system maintenance tasks like cache cleanup and service restarts.",
+      "category": "system",
+      "isEnabled": true,
+      "configStatus": "configured",
+      "lastUsedAt": "2026-03-03T17:02:11Z",
+      "config": [
+        { "key": "allowed_dirs", "label": "Allowed directories", "value": "/home/user, /tmp, /var/log", "isSecret": false },
+        { "key": "timeout_seconds", "label": "Command timeout (s)", "value": "30", "isSecret": false }
+      ],
+      "instructions": "---\nname: shell-executor\ndescription: Runs shell commands and scripts on the host machine.\ntools:\n  - bash\n---\n\n# Shell Executor\n\nRuns shell commands and scripts directly on the host machine.\n\n## Actions\n\n- `run(command)` — Execute a shell command and return stdout/stderr\n- `run_script(path)` — Execute a script file by path\n- `read_file(path)` — Read a file and return its contents\n\n## Inputs\n\n- `command` — A shell command string. Must be within `allowed_dirs` scope.\n- `timeout` — Optional override for the command timeout in seconds.\n\n## Output\n\nReturns `{ stdout, stderr, exit_code }`. Non-zero `exit_code` should be treated as an error.\n\n## Notes\n\n- Commands are sandboxed to `allowed_dirs`. Attempts to access paths outside this list will be rejected.\n- Do not run interactive commands (e.g. `vim`, `top`). Use non-interactive flags.\n- Prefer absolute paths to avoid working directory ambiguity."
+    },
+    {
+      "id": "sk-sys-002",
+      "name": "OpenClaw Monitor",
+      "description": "Monitors the OpenClaw daemon health and triggers alerts if any agent goes unresponsive for more than 5 minutes.",
+      "category": "system",
+      "isEnabled": true,
+      "configStatus": "configured",
+      "lastUsedAt": "2026-03-03T00:00:05Z",
+      "config": [
+        { "key": "check_interval", "label": "Check interval (s)", "value": "60", "isSecret": false },
+        { "key": "alert_email", "label": "Alert email", "value": "ops@example.com", "isSecret": false }
+      ],
+      "instructions": "---\nname: openclaw-monitor\ndescription: Monitors the OpenClaw daemon health and triggers alerts.\ntools:\n  - bash\n---\n\n# OpenClaw Monitor\n\nPolls the OpenClaw daemon and all registered agents for health status. Sends alerts when thresholds are exceeded.\n\n## Actions\n\n- `check_health()` — Returns the current health status of the daemon and all agents\n- `get_unresponsive()` — Returns a list of agents that have not reported in over `check_interval × 5` seconds\n- `send_alert(message)` — Sends an alert email to the configured address\n\n## Output\n\n`check_health()` returns `{ daemon_ok: bool, agents: [{ id, name, status, last_seen }] }`\n\n## Notes\n\n- This skill runs passively on a schedule — you do not need to invoke it manually.\n- `send_alert` should only be called when `get_unresponsive()` returns a non-empty list to avoid alert spam."
+    }
+  ],
+  "agentGroups": [
+    {
+      "agentId": "gumbo",
+      "agentName": "Gumbo",
+      "skills": [
+        {
+          "id": "sk-gumbo-001",
+          "name": "Gmail",
+          "description": "Reads, drafts, and sends emails via the Gmail API. Gumbo uses this for intake processing and sending follow-ups.",
+          "category": "communication",
+          "isEnabled": true,
+          "configStatus": "configured",
+          "lastUsedAt": "2026-03-03T17:02:11Z",
+          "config": [
+            { "key": "oauth_token", "label": "OAuth token", "value": "ya29.••••••••••••••••••••••", "isSecret": true },
+            { "key": "max_results", "label": "Max emails per scan", "value": "50", "isSecret": false }
+          ],
+          "instructions": "---\nname: gmail\ndescription: Read, draft, and send emails via the Gmail API.\ntools:\n  - browser\n---\n\n# Gmail\n\nRead, triage, draft, and send emails via the Gmail API.\n\n## Actions\n\n- `list_inbox(max_results?)` — Fetch recent emails from the inbox\n- `get_email(id)` — Fetch the full content of an email by ID\n- `send_email({ to, subject, body })` — Send a new email\n- `reply_email(id, body)` — Reply to an existing thread\n- `label_email(id, label)` — Apply a Gmail label to an email\n\n## Inputs\n\n- `to` — Recipient email address(es), comma-separated\n- `subject` — Subject line (plain text)\n- `body` — Email body (plain text or HTML)\n\n## Output\n\n`list_inbox` returns an array of `{ id, from, subject, snippet, date, labels }`.\n\n## Notes\n\n- Do not send emails without explicit user instruction or a clear task directive.\n- Check for existing threads before sending a new email — prefer `reply_email` to keep context.\n- Avoid forwarding or sharing email content outside of the user's explicit request."
+        },
+        {
+          "id": "sk-gumbo-002",
+          "name": "Google Calendar",
+          "description": "Creates, reads, and updates calendar events. Used for scheduling Q1 reviews, reminders, and deadline tracking.",
+          "category": "calendar",
+          "isEnabled": true,
+          "configStatus": "configured",
+          "lastUsedAt": "2026-03-03T01:45:20Z",
+          "config": [
+            { "key": "oauth_token", "label": "OAuth token", "value": "ya29.••••••••••••••••••••••", "isSecret": true },
+            { "key": "default_calendar", "label": "Default calendar", "value": "primary", "isSecret": false }
+          ],
+          "instructions": "---\nname: google-calendar\ndescription: Create, read, and update Google Calendar events.\ntools:\n  - browser\n---\n\n# Google Calendar\n\nRead and write calendar events via the Google Calendar API.\n\n## Actions\n\n- `list_events(date_range?)` — List events in a date range (defaults to next 7 days)\n- `get_event(id)` — Get full event details\n- `create_event({ title, start, end, description?, attendees? })` — Create a new event\n- `update_event(id, changes)` — Update an existing event\n- `delete_event(id)` — Delete an event\n\n## Inputs\n\n- `start` / `end` — ISO 8601 datetime strings\n- `attendees` — Array of email addresses\n- `date_range` — `{ from: ISO, to: ISO }`\n\n## Output\n\n`list_events` returns `[{ id, title, start, end, attendees, location }]`.\n\n## Notes\n\n- Always confirm with the user before creating events with external attendees.\n- Use `list_events` first to check for conflicts before scheduling.\n- Events default to the `default_calendar` unless explicitly specified."
+        },
+        {
+          "id": "sk-gumbo-003",
+          "name": "Web Search",
+          "description": "Performs web searches using the Brave Search API. Used for quick lookups during daily synthesis.",
+          "category": "web",
+          "isEnabled": true,
+          "configStatus": "configured",
+          "lastUsedAt": "2026-03-02T05:00:08Z",
+          "config": [
+            { "key": "api_key", "label": "Brave API key", "value": "BSA-••••••••••••••••••••", "isSecret": true }
+          ],
+          "instructions": "---\nname: web-search\ndescription: Search the web using the Brave Search API.\ntools:\n  - bash\n---\n\n# Web Search\n\nPerforms web searches via the Brave Search API and returns structured results.\n\n## Actions\n\n- `search(query, count?)` — Search the web and return top results\n- `search_news(query, count?)` — Search recent news articles\n\n## Inputs\n\n- `query` — Search query string\n- `count` — Number of results to return (default: 5, max: 20)\n\n## Output\n\nReturns `[{ title, url, description, published_date? }]`.\n\n## Notes\n\n- Use specific, targeted queries. Vague queries return lower quality results.\n- `search_news` is preferred when recency matters (e.g. current events, recent releases).\n- Do not pass personally identifiable information (PII) as part of search queries."
+        }
+      ]
+    },
+    {
+      "agentId": "bernard",
+      "agentName": "Bernard",
+      "skills": [
+        {
+          "id": "sk-bernard-001",
+          "name": "GitHub",
+          "description": "Reads commits, opens issues, reviews pull requests, and posts inline comments via the GitHub API.",
+          "category": "code",
+          "isEnabled": true,
+          "configStatus": "configured",
+          "lastUsedAt": "2026-03-02T14:31:55Z",
+          "config": [
+            { "key": "access_token", "label": "Personal access token", "value": "ghp_••••••••••••••••••••••••", "isSecret": true },
+            { "key": "default_repo", "label": "Default repository", "value": "buildermethods/openclaw", "isSecret": false }
+          ],
+          "instructions": "---\nname: github\ndescription: Interact with GitHub repositories, issues, and pull requests.\ntools:\n  - bash\n---\n\n# GitHub\n\nInteract with GitHub repositories, issues, and pull requests via the GitHub REST API.\n\n## Actions\n\n- `list_prs(repo?)` — List open pull requests\n- `get_pr(number, repo?)` — Get PR details including diff and comments\n- `review_pr(number, comments, decision)` — Submit a review with inline comments\n- `list_commits(branch?, repo?)` — List recent commits\n- `get_commit(sha, repo?)` — Get full diff for a commit\n- `create_issue({ title, body, labels? }, repo?)` — Open a new issue\n- `comment_issue(number, body, repo?)` — Add a comment to an issue\n\n## Inputs\n\n- `decision` — One of `\"APPROVE\"`, `\"REQUEST_CHANGES\"`, `\"COMMENT\"`\n- `comments` — Array of `{ path, line, body }` for inline review comments\n- `repo` — Defaults to `default_repo` if not specified\n\n## Output\n\n`get_pr` returns `{ number, title, author, diff, comments, status }`.\n\n## Notes\n\n- Always read the full diff before approving a PR.\n- Use `REQUEST_CHANGES` if any blocking issues are found, not just `COMMENT`.\n- Reference issue numbers in commit messages and PR descriptions where applicable."
+        },
+        {
+          "id": "sk-bernard-002",
+          "name": "Web Browse",
+          "description": "Opens URLs and extracts page content for research. Used to check documentation and changelogs.",
+          "category": "web",
+          "isEnabled": true,
+          "configStatus": "configured",
+          "lastUsedAt": "2026-03-02T14:31:55Z",
+          "config": [],
+          "instructions": "---\nname: web-browse\ndescription: Open URLs and extract page content for research and changelog reading.\ntools:\n  - browser\n---\n\n# Web Browse\n\nFetches a URL and returns the page content as cleaned Markdown.\n\n## Actions\n\n- `browse(url)` — Fetch a URL and return its content\n- `extract(url, selector)` — Fetch a URL and extract a specific CSS selector's content\n\n## Inputs\n\n- `url` — A fully qualified URL (must include `https://`)\n- `selector` — Optional CSS selector to narrow extraction (e.g. `article`, `#changelog`)\n\n## Output\n\nReturns `{ url, title, content, fetched_at }`. Content is plain text with basic Markdown structure.\n\n## Notes\n\n- Some sites block automated access and will return 403. If this happens, do not retry immediately — log the failure and report it.\n- Do not follow redirect chains more than 2 hops deep.\n- Prefer `extract` over `browse` for large pages to reduce noise."
+        },
+        {
+          "id": "sk-bernard-003",
+          "name": "Slack",
+          "description": "Posts messages and threads to Slack channels and DMs. Intended for CI/CD failure notifications.",
+          "category": "communication",
+          "isEnabled": false,
+          "configStatus": "needs_setup",
+          "lastUsedAt": null,
+          "config": [
+            { "key": "bot_token", "label": "Bot token", "value": "", "isSecret": true },
+            { "key": "default_channel", "label": "Default channel", "value": "", "isSecret": false }
+          ],
+          "instructions": "---\nname: slack\ndescription: Post messages and reply to threads in Slack workspaces.\ntools:\n  - bash\n---\n\n# Slack\n\nPost messages and reply to threads in Slack workspaces via the Slack Bot API.\n\n## Actions\n\n- `post_message({ channel, text, blocks? })` — Post a message to a channel or DM\n- `reply_thread(channel, thread_ts, text)` — Reply to an existing thread\n- `list_channels()` — List available channels the bot has access to\n\n## Inputs\n\n- `channel` — Channel name (e.g. `#dev-alerts`) or user ID for DMs\n- `blocks` — Optional Slack Block Kit payload for rich formatting\n- `thread_ts` — The `ts` value of the parent message to reply in-thread\n\n## Output\n\n`post_message` returns `{ ok, ts, channel }`. Use `ts` if you need to reply in the same thread later.\n\n## Notes\n\n- This skill requires a valid `bot_token` to be configured before use.\n- Prefer `#dev-alerts` for automated notifications. Do not post to general channels without user instruction.\n- Keep automated messages concise — include a summary and a link, not the full content."
+        }
+      ]
+    },
+    {
+      "agentId": "vale",
+      "agentName": "Vale",
+      "skills": [
+        {
+          "id": "sk-vale-001",
+          "name": "Twitter / X",
+          "description": "Posts tweets and threads to Twitter/X. Vale uses this to publish content from the approved publish queue.",
+          "category": "communication",
+          "isEnabled": true,
+          "configStatus": "configured",
+          "lastUsedAt": "2026-03-02T14:30:00Z",
+          "config": [
+            { "key": "api_key", "label": "API key", "value": "••••••••••••••••••••••••••", "isSecret": true },
+            { "key": "api_secret", "label": "API secret", "value": "••••••••••••••••••••••••••", "isSecret": true }
+          ],
+          "instructions": "---\nname: twitter-x\ndescription: Post tweets and threads to Twitter/X via the API v2.\ntools:\n  - bash\n---\n\n# Twitter / X\n\nPost tweets and threads to Twitter/X via the API v2.\n\n## Actions\n\n- `post_tweet(text)` — Post a single tweet (max 280 chars)\n- `post_thread(tweets[])` — Post a sequence of tweets as a thread\n- `get_metrics(tweet_id)` — Get engagement metrics for a tweet\n\n## Inputs\n\n- `text` — Tweet text. Must be ≤ 280 characters.\n- `tweets` — Array of strings for threads. Each string ≤ 280 chars.\n\n## Output\n\n`post_tweet` returns `{ id, text, created_at, url }`.\n\n## Notes\n\n- **Only post content that has been explicitly approved.** Do not post drafts or speculative content.\n- Threads should have a clear narrative arc. Don't split a thought mid-sentence between tweets.\n- Check for scheduled posts before publishing to avoid duplicate content.\n- Do not post more than 3 times per day unless explicitly instructed."
+        },
+        {
+          "id": "sk-vale-002",
+          "name": "Obsidian Notes",
+          "description": "Reads and writes Markdown notes in a local Obsidian vault. Used for saving content briefs and research notes.",
+          "category": "notes",
+          "isEnabled": true,
+          "configStatus": "configured",
+          "lastUsedAt": "2026-03-02T10:15:02Z",
+          "config": [
+            { "key": "vault_path", "label": "Vault path", "value": "/Users/shaowei/Documents/Obsidian/Main", "isSecret": false }
+          ],
+          "instructions": "---\nname: obsidian-notes\ndescription: Read and write Markdown notes in a local Obsidian vault.\ntools:\n  - bash\n---\n\n# Obsidian Notes\n\nRead and write Markdown files in a local Obsidian vault via the filesystem.\n\n## Actions\n\n- `read_note(path)` — Read a note by relative path within the vault\n- `write_note(path, content)` — Create or overwrite a note\n- `append_note(path, content)` — Append content to an existing note\n- `list_notes(folder?)` — List all notes in a folder (defaults to vault root)\n- `search_notes(query)` — Full-text search across the vault\n\n## Inputs\n\n- `path` — Relative path within the vault, e.g. `Content/Briefs/march-launch.md`\n- `content` — Markdown string\n\n## Output\n\n`read_note` returns `{ path, content, modified_at }`.\n`list_notes` returns `[{ path, title, modified_at }]`.\n\n## Notes\n\n- Always use `append_note` instead of `write_note` when adding to an existing document to avoid overwriting.\n- Organize new notes under the appropriate folder (`Content/`, `Research/`, `Briefs/`).\n- Include frontmatter (`---`) with `title`, `date`, and `tags` when creating new notes."
+        },
+        {
+          "id": "sk-vale-003",
+          "name": "LinkedIn",
+          "description": "Posts articles and status updates to LinkedIn. Currently pending OAuth setup.",
+          "category": "communication",
+          "isEnabled": false,
+          "configStatus": "needs_setup",
+          "lastUsedAt": null,
+          "config": [
+            { "key": "access_token", "label": "Access token", "value": "", "isSecret": true }
+          ],
+          "instructions": "---\nname: linkedin\ndescription: Post updates and articles to a LinkedIn profile or company page.\ntools:\n  - bash\n---\n\n# LinkedIn\n\nPost updates and articles to a LinkedIn profile or company page via the LinkedIn API.\n\n## Actions\n\n- `post_update(text)` — Post a short status update\n- `post_article({ title, body, summary })` — Publish a long-form article\n- `get_post_stats(post_id)` — Get views, likes, and comments for a post\n\n## Inputs\n\n- `text` — Update text (max 3000 chars)\n- `title` — Article title\n- `body` — Article body in HTML\n- `summary` — Short summary shown in feeds (max 256 chars)\n\n## Output\n\n`post_update` returns `{ id, url, created_at }`.\n\n## Notes\n\n- This skill requires a valid `access_token` before use. Configure it in the Skills panel.\n- LinkedIn access tokens expire after 60 days — refresh before that deadline.\n- Do not post the same content as Twitter/X verbatim. Adapt tone for a professional audience."
+        }
+      ]
+    },
+    {
+      "agentId": "claw",
+      "agentName": "Claw",
+      "skills": [
+        {
+          "id": "sk-claw-001",
+          "name": "Web Browse",
+          "description": "Fetches and parses web pages for research, changelog reading, and doc lookups.",
+          "category": "web",
+          "isEnabled": true,
+          "configStatus": "configured",
+          "lastUsedAt": "2026-03-03T02:14:55Z",
+          "config": [],
+          "instructions": "---\nname: web-browse\ndescription: Fetch and parse web pages for research and doc lookups.\ntools:\n  - browser\n---\n\n# Web Browse\n\nFetches a URL and returns the page content as cleaned Markdown.\n\n## Actions\n\n- `browse(url)` — Fetch a URL and return its content\n- `extract(url, selector)` — Fetch a URL and extract a specific CSS selector's content\n\n## Inputs\n\n- `url` — A fully qualified URL (must include `https://`)\n- `selector` — Optional CSS selector to narrow extraction\n\n## Output\n\nReturns `{ url, title, content, fetched_at }`.\n\n## Notes\n\n- Some sites block automated access and will return 403. Log the failure and report it.\n- Do not follow redirect chains more than 2 hops deep.\n- Prefer `extract` over `browse` for large pages to reduce noise."
+        },
+        {
+          "id": "sk-claw-002",
+          "name": "OpenClaw CLI",
+          "description": "Invokes openclaw CLI commands for agent management, updates, and config changes. Tightly scoped to admin operations.",
+          "category": "system",
+          "isEnabled": true,
+          "configStatus": "configured",
+          "lastUsedAt": "2026-02-27T16:12:44Z",
+          "config": [
+            { "key": "binary_path", "label": "CLI binary path", "value": "/usr/local/bin/openclaw", "isSecret": false },
+            { "key": "config_dir", "label": "Config directory", "value": "~/.openclaw", "isSecret": false }
+          ],
+          "instructions": "---\nname: openclaw-cli\ndescription: Invoke the openclaw CLI for agent management and updates.\ntools:\n  - bash\n---\n\n# OpenClaw CLI\n\nInvokes the `openclaw` CLI binary to manage agents, apply updates, and modify daemon configuration.\n\n## Actions\n\n- `run(subcommand, args?)` — Run any openclaw CLI subcommand\n- `get_version()` — Return the current daemon version\n- `list_agents()` — List all registered agents and their status\n- `restart_agent(id)` — Restart a specific agent\n- `apply_update(version?)` — Pull and apply the latest (or specified) release\n\n## Inputs\n\n- `subcommand` — Any valid `openclaw` subcommand string\n- `version` — Optional semver string, e.g. `\"2.4.1\"`. Omit for latest.\n\n## Output\n\nAll actions return `{ stdout, stderr, exit_code }`. Check `exit_code === 0` for success.\n\n## Notes\n\n- **Only use this skill for administrative operations.** Do not invoke arbitrary subcommands without a clear task.\n- Always run `get_version()` before applying an update to confirm the current baseline.\n- `restart_agent` will cause a brief interruption for that agent — avoid during active task execution.\n- Config changes via CLI take effect after daemon restart."
+        }
+      ]
+    },
+    {
+      "agentId": "scout",
+      "agentName": "Scout",
+      "skills": [
+        {
+          "id": "sk-scout-001",
+          "name": "Web Browse",
+          "description": "Browses and scrapes web pages for market research, competitor pricing, and trend scanning. Recent 403 errors suggest IP blocking on some targets.",
+          "category": "web",
+          "isEnabled": true,
+          "configStatus": "configured",
+          "lastUsedAt": "2026-03-01T08:03:10Z",
+          "config": [
+            { "key": "user_agent", "label": "User agent", "value": "Mozilla/5.0 (compatible; OpenClaw/2.4)", "isSecret": false }
+          ],
+          "instructions": "---\nname: web-browse\ndescription: Browse and scrape web pages for market research and data extraction.\ntools:\n  - browser\n---\n\n# Web Browse\n\nFetches and scrapes web pages for research and data extraction.\n\n## Actions\n\n- `browse(url)` — Fetch a URL and return its content as Markdown\n- `extract(url, selector)` — Extract a specific element from the page\n\n## Inputs\n\n- `url` — Fully qualified URL\n- `selector` — Optional CSS selector\n\n## Output\n\nReturns `{ url, title, content, fetched_at }`.\n\n## Notes\n\n- **Known issue:** Several target sites (competitor pricing pages) are returning 403. This is likely due to IP-based blocking. A GitHub issue (#88) has been opened to investigate proxy options.\n- When a 403 is encountered, log it with `status: failed` and skip — do not retry in the same run.\n- Rotate the `user_agent` string if repeated failures are observed on a previously working target."
+        },
+        {
+          "id": "sk-scout-002",
+          "name": "Airtable",
+          "description": "Reads and writes rows in Airtable bases. Planned for saving competitive intelligence data, but not yet configured.",
+          "category": "productivity",
+          "isEnabled": false,
+          "configStatus": "needs_setup",
+          "lastUsedAt": null,
+          "config": [
+            { "key": "api_key", "label": "API key", "value": "", "isSecret": true },
+            { "key": "base_id", "label": "Base ID", "value": "", "isSecret": false }
+          ],
+          "instructions": "---\nname: airtable\ndescription: Read and write records in Airtable bases via the REST API.\ntools:\n  - bash\n---\n\n# Airtable\n\nRead and write records in Airtable bases via the Airtable REST API.\n\n## Actions\n\n- `list_records(table, filter?)` — List records in a table, optionally filtered\n- `get_record(table, id)` — Get a single record by ID\n- `create_record(table, fields)` — Create a new record\n- `update_record(table, id, fields)` — Update an existing record\n\n## Inputs\n\n- `table` — Table name or ID within the configured base\n- `fields` — Object of field name → value pairs\n- `filter` — Airtable formula string (e.g. `\"{Status} = 'Active'\"`)\n\n## Output\n\n`list_records` returns `[{ id, fields, created_time }]`.\n\n## Notes\n\n- This skill requires both `api_key` and `base_id` to be configured before use.\n- Field names are case-sensitive and must match the Airtable table schema exactly.\n- Rate limit: 5 requests/second per base. Add a 200ms delay between bulk operations."
+        }
+      ]
+    }
+  ]
+}

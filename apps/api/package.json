@@ -11,10 +11,12 @@
     "test": "echo 'no tests yet'"
   },
   "dependencies": {
+    "@uss/db": "workspace:*",
     "@uss/shared": "workspace:*",
+    "@elysiajs/node": "^1.4.3",
+    "drizzle-orm": "^0.35.1",
     "dotenv": "^16.4.5",
-    "elysia": "^1.1.20",
-    "@elysiajs/node": "^1.4.3"
+    "elysia": "^1.1.20"
   },
   "devDependencies": {
     "@types/node": "^22.7.4",

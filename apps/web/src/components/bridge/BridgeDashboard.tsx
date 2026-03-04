@@ -48,7 +48,7 @@ export function BridgeDashboard({ data }: { data: BridgeResponse }) {
                   <AgentCard
                     key={agent.id}
                     agent={agent}
-                    onClick={() => router.push('/agents')}
+                    onClick={() => router.push(`/agents/${encodeURIComponent(agent.id)}`)}
                   />
                 ))}
               </Group>

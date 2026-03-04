@@ -271,7 +271,7 @@ export class GatewayClient {
           instanceId: "uss-bridge-api",
         },
         role: "operator",
-        scopes: ["operator.read"],
+        scopes: ["operator.admin"],
         caps: [],
         locale: "en-US",
         userAgent: "uss-bridge-api",

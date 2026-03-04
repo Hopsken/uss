@@ -5,6 +5,7 @@ import { ColorSchemeScript, MantineProvider } from '@mantine/core'
 import type { Metadata } from 'next'
 import { ussTheme } from '@/lib/theme'
 import { ShellFrame } from '@/components/ShellFrame'
+import { ReactQueryProvider } from '@/components/providers/ReactQueryProvider'
 
 export const metadata: Metadata = {
   title: 'USS',
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <ColorSchemeScript defaultColorScheme="light" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -25,7 +26,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <MantineProvider theme={ussTheme} defaultColorScheme="light">
-          <ShellFrame>{children}</ShellFrame>
+          <ReactQueryProvider>
+            <ShellFrame>{children}</ShellFrame>
+          </ReactQueryProvider>
         </MantineProvider>
       </body>
     </html>

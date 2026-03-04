@@ -76,3 +76,77 @@ export type BridgeResponse = {
   systemHealth: SystemHealth
   usageSnapshot: UsageSnapshot
 }
+
+export type AgentTaskStatus = 'running' | 'completed' | 'failed' | 'scheduled'
+
+export type AgentModel = {
+  id: string
+  name: string
+}
+
+export type AgentTaskHistoryItem = {
+  id: string
+  title: string
+  status: AgentTaskStatus
+  ranAt: string
+}
+
+export type AgentSkillSummary = {
+  id: string
+  name: string
+  enabled: boolean
+}
+
+export type AgentUsageSummary = {
+  tokens: number
+  costUsd: number
+  conversations: number
+}
+
+export type AgentConfigDoc = {
+  filename: string
+  content: string
+}
+
+export type AgentListItem = {
+  id: string
+  name: string
+  role: string
+  status: AgentStatus
+  model: AgentModel
+}
+
+export type AgentDetailPayload = {
+  id: string
+  name: string
+  role: string
+  status: AgentStatus
+  model: AgentModel
+  usageSummary: AgentUsageSummary
+  recentTasks: AgentTaskHistoryItem[]
+  skills: AgentSkillSummary[]
+  configDocs: AgentConfigDoc[]
+}
+
+export type AgentsListResponse = {
+  agents: AgentListItem[]
+  availableModels: AgentModel[]
+  syncedAt: string
+}
+
+export type AgentDetailResponse = {
+  agent: AgentDetailPayload
+  availableModels: AgentModel[]
+  syncedAt: string
+}
+
+export type UpdateAgentModelRequest = {
+  modelId: string
+}
+
+export type UpdateAgentModelResponse = {
+  ok: true
+  agentId: string
+  modelId: string
+  syncedAt: string
+}

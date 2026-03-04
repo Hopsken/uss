@@ -10,3 +10,5 @@ coverage
 *.db-journal
 .DS_Store
 tmp
+
+tsconfig.tsbuildinfo

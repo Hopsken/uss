@@ -20,7 +20,7 @@ export function ShellFrame({ children }: { children: ReactNode }) {
 
   const items = NAV_ITEMS.map((item) => ({
     ...item,
-    isActive: pathname === item.href,
+    isActive: item.href === '/agents' ? pathname.startsWith('/agents') : pathname === item.href,
   }))
 
   return (

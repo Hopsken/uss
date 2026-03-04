@@ -63,6 +63,9 @@ importers:
       '@uss/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      ky:
+        specifier: ^1.7.5
+        version: 1.14.3
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@18.3.1)
@@ -1182,6 +1185,10 @@ packages:
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
+
+  ky@1.14.3:
+    resolution: {integrity: sha512-9zy9lkjac+TR1c2tG+mkNSVlyOpInnWdSMiue4F+kq8TwJSgv6o8jhLRg8Ho6SnZ9wOYUq/yozts9qQCfk7bIw==}
+    engines: {node: '>=18'}
 
   libsql@0.4.7:
     resolution: {integrity: sha512-T9eIRCs6b0J1SHKYIvD8+KCJMcWZ900iZyxdnSCdqxN12Z1ijzT+jY5nrk72Jw4B0HGzms2NgpryArlJqvc3Lw==}
@@ -2320,6 +2327,8 @@ snapshots:
   js-base64@3.7.8: {}
 
   js-tokens@4.0.0: {}
+
+  ky@1.14.3: {}
 
   libsql@0.4.7:
     dependencies:

@@ -5,65 +5,70 @@ import type {
   UpdateAgentModelRequest,
   UpdateAgentModelResponse,
 } from '@uss/shared'
+import ky, { HTTPError } from 'ky'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8787'
+const api = ky.create({
+  prefixUrl: API_BASE_URL,
+})
 
-export async function fetchBridgeData(): Promise<BridgeResponse> {
-  const res = await fetch(`${API_BASE_URL}/v1/bridge`, { cache: 'no-store' })
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch bridge data: ${res.status}`)
-  }
-
-  return (await res.json()) as BridgeResponse
-}
-
-async function parseError(res: Response): Promise<Error> {
+async function parseError(res: Response, fallback: string): Promise<Error> {
   try {
     const payload = (await res.json()) as { error?: string }
-    return new Error(payload.error ?? `Request failed (${res.status})`)
+    return new Error(payload.error ?? fallback)
   } catch {
-    return new Error(`Request failed (${res.status})`)
+    return new Error(fallback)
+  }
+}
+
+async function handleApiError(error: unknown, fallback: string): Promise<never> {
+  if (error instanceof HTTPError) {
+    throw await parseError(error.response, `${fallback} (${error.response.status})`)
+  }
+  throw error
+}
+
+export async function fetchBridgeData(): Promise<BridgeResponse> {
+  try {
+    return await api
+      .get('v1/bridge', { cache: 'no-store' })
+      .json<BridgeResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to fetch bridge data')
   }
 }
 
 export async function fetchAgentsList(): Promise<AgentsListResponse> {
-  const res = await fetch(`${API_BASE_URL}/v1/agents`, { cache: 'no-store' })
-
-  if (!res.ok) {
-    throw await parseError(res)
+  try {
+    return await api
+      .get('v1/agents', { cache: 'no-store' })
+      .json<AgentsListResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to fetch agents list')
   }
-
-  return (await res.json()) as AgentsListResponse
 }
 
 export async function fetchAgentDetail(agentId: string): Promise<AgentDetailResponse> {
-  const res = await fetch(`${API_BASE_URL}/v1/agents/${encodeURIComponent(agentId)}`, {
-    cache: 'no-store',
-  })
-
-  if (!res.ok) {
-    throw await parseError(res)
+  try {
+    return await api
+      .get(`v1/agents/${encodeURIComponent(agentId)}`, { cache: 'no-store' })
+      .json<AgentDetailResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to fetch agent detail')
   }
-
-  return (await res.json()) as AgentDetailResponse
 }
 
 export async function updateAgentModel(
   agentId: string,
   body: UpdateAgentModelRequest,
 ): Promise<UpdateAgentModelResponse> {
-  const res = await fetch(`${API_BASE_URL}/v1/agents/${encodeURIComponent(agentId)}/model`, {
-    method: 'PATCH',
-    headers: {
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  })
-
-  if (!res.ok) {
-    throw await parseError(res)
+  try {
+    return await api
+      .patch(`v1/agents/${encodeURIComponent(agentId)}/model`, {
+        json: body,
+      })
+      .json<UpdateAgentModelResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to update agent model')
   }
-
-  return (await res.json()) as UpdateAgentModelResponse
 }

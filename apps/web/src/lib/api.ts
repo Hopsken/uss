@@ -3,9 +3,18 @@ import type {
   AssignSkillResponse,
   UsageQuery,
   UsageResponse,
+  CreateTaskRequest,
+  CreateTaskTemplateRequest,
   AgentDetailResponse,
   AgentsListResponse,
   BridgeResponse,
+  TaskMutationResponse,
+  TaskReassignRequest,
+  TaskRun,
+  TaskStatusChangeRequest,
+  TasksDashboardResponse,
+  UpdateTaskRequest,
+  UpdateTaskTemplateRequest,
   SaveSkillConfigRequest,
   SaveSkillConfigResponse,
   SkillsResponse,
@@ -152,5 +161,102 @@ export async function assignSkill(
       .json<AssignSkillResponse>()
   } catch (error) {
     return handleApiError(error, 'Failed to assign skill')
+  }
+}
+
+export async function fetchTasksDashboard(agentId?: string): Promise<TasksDashboardResponse> {
+  try {
+    return await api
+      .get('v1/tasks', {
+        searchParams: agentId ? { agentId } : undefined,
+        cache: 'no-store',
+      })
+      .json<TasksDashboardResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to fetch tasks dashboard')
+  }
+}
+
+export async function createTask(body: CreateTaskRequest): Promise<TaskMutationResponse> {
+  try {
+    return await api.post('v1/tasks', { json: body }).json<TaskMutationResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to create task')
+  }
+}
+
+export async function updateTask(taskId: string, body: UpdateTaskRequest): Promise<TaskMutationResponse> {
+  try {
+    return await api.patch(`v1/tasks/${encodeURIComponent(taskId)}`, { json: body }).json<TaskMutationResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to update task')
+  }
+}
+
+export async function deleteTask(taskId: string): Promise<TaskMutationResponse> {
+  try {
+    return await api.delete(`v1/tasks/${encodeURIComponent(taskId)}`).json<TaskMutationResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to delete task')
+  }
+}
+
+export async function runTaskNow(taskId: string): Promise<TaskMutationResponse> {
+  try {
+    return await api.post(`v1/tasks/${encodeURIComponent(taskId)}/run-now`).json<TaskMutationResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to run task')
+  }
+}
+
+export async function changeTaskStatus(taskId: string, body: TaskStatusChangeRequest): Promise<TaskMutationResponse> {
+  try {
+    return await api
+      .patch(`v1/tasks/${encodeURIComponent(taskId)}/status`, { json: body })
+      .json<TaskMutationResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to change task status')
+  }
+}
+
+export async function reassignTask(taskId: string, body: TaskReassignRequest): Promise<TaskMutationResponse> {
+  try {
+    return await api
+      .patch(`v1/tasks/${encodeURIComponent(taskId)}/reassign`, { json: body })
+      .json<TaskMutationResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to reassign task')
+  }
+}
+
+export async function fetchTaskRuns(taskId: string): Promise<{ runs: TaskRun[] }> {
+  try {
+    return await api.get(`v1/tasks/${encodeURIComponent(taskId)}/runs`, { cache: 'no-store' }).json<{ runs: TaskRun[] }>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to fetch task runs')
+  }
+}
+
+export async function createTaskTemplate(body: CreateTaskTemplateRequest): Promise<{ ok: true }> {
+  try {
+    return await api.post('v1/tasks/templates', { json: body }).json<{ ok: true }>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to create template')
+  }
+}
+
+export async function updateTaskTemplate(templateId: string, body: UpdateTaskTemplateRequest): Promise<{ ok: true }> {
+  try {
+    return await api.patch(`v1/tasks/templates/${encodeURIComponent(templateId)}`, { json: body }).json<{ ok: true }>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to update template')
+  }
+}
+
+export async function deleteTaskTemplate(templateId: string): Promise<{ ok: true }> {
+  try {
+    return await api.delete(`v1/tasks/templates/${encodeURIComponent(templateId)}`).json<{ ok: true }>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to delete template')
   }
 }

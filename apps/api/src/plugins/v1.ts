@@ -4,10 +4,12 @@ import { bridgeRoutes } from "../modules/bridge/bridge.routes.js";
 import { agentsRoutes } from "../modules/agents/agents.routes.js";
 import { usageRoutes } from "../modules/usage/usage.routes.js";
 import { skillsRoutes } from "../modules/skills/skills.routes.js";
+import { tasksRoutes } from "../modules/tasks/tasks.routes.js";
 
 export const v1Plugin = new Elysia({ name: "v1", prefix: "/v1" })
   .use(healthRoutes)
   .use(bridgeRoutes)
   .use(agentsRoutes)
   .use(usageRoutes)
-  .use(skillsRoutes);
+  .use(skillsRoutes)
+  .use(tasksRoutes);

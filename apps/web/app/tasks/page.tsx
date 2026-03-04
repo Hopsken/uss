@@ -1,10 +1,10 @@
-import { SectionPlaceholder } from '@/components/SectionPlaceholder'
+import { TasksClient } from '@/components/tasks/TasksClient'
+import { Suspense } from 'react'
 
 export default function TasksPage() {
   return (
-    <SectionPlaceholder
-      title="Tasks"
-      subtitle="Route scaffolded for shell milestone review"
-    />
+    <Suspense fallback={null}>
+      <TasksClient />
+    </Suspense>
   )
 }

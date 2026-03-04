@@ -294,3 +294,116 @@ export type AssignSkillResponse = {
   reason: string | null
   syncedAt: string
 }
+
+export type TaskStatus = 'pending' | 'running' | 'done' | 'failed' | 'cancelled'
+export type TaskLastRunStatus = 'never' | 'success' | 'failed' | 'timeout' | 'running'
+export type KanbanView = 'by_agent' | 'by_status'
+export type SchedulePreset = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom'
+export type ChangelogEntryType =
+  | 'task_created'
+  | 'status_changed'
+  | 'agent_assigned'
+  | 'task_updated'
+  | 'run_triggered'
+
+export type TaskSchedule = {
+  type: 'one_time' | 'recurring'
+  scheduledAt?: string
+  preset?: SchedulePreset
+  cronExpression?: string
+  humanReadable: string
+}
+
+export type ChangelogEntry = {
+  id: string
+  type: ChangelogEntryType
+  message: string
+  detail: string
+  occurredAt: string
+}
+
+export type Task = {
+  id: string
+  title: string
+  instructions: string
+  agentId: string
+  agentName: string
+  agentRole: string
+  status: TaskStatus
+  schedule: TaskSchedule
+  createdAt: string
+  updatedAt: string
+  completedAt: string | null
+  templateId: string | null
+  changelog: ChangelogEntry[]
+  executionLog: string | null
+  lastRunStatus: TaskLastRunStatus
+  lastRunAt: string | null
+  lastRunError: string | null
+}
+
+export type TaskRun = {
+  id: string
+  taskId: string
+  trigger: 'schedule' | 'manual'
+  status: 'running' | 'success' | 'failed' | 'timeout'
+  startedAt: string
+  endedAt: string | null
+  executionLog: string | null
+  error: string | null
+}
+
+export type TaskTemplate = {
+  id: string
+  name: string
+  description: string
+  defaultInstructions: string
+  suggestedAgentId?: string
+}
+
+export type AgentRef = {
+  id: string
+  name: string
+  role: string
+}
+
+export type TasksDashboardResponse = {
+  tasks: Task[]
+  templates: TaskTemplate[]
+  agents: AgentRef[]
+  syncedAt: string
+}
+
+export type CreateTaskRequest = {
+  title: string
+  instructions: string
+  agentId: string
+  schedule: TaskSchedule
+  templateId: string | null
+}
+
+export type UpdateTaskRequest = Partial<{
+  title: string
+  instructions: string
+  agentId: string
+  schedule: TaskSchedule
+  templateId: string | null
+}>
+
+export type TaskStatusChangeRequest = {
+  status: TaskStatus
+}
+
+export type TaskReassignRequest = {
+  agentId: string
+}
+
+export type TaskMutationResponse = {
+  ok: true
+  taskId: string
+  syncedAt: string
+  warnings?: string[]
+}
+
+export type CreateTaskTemplateRequest = Omit<TaskTemplate, 'id'>
+export type UpdateTaskTemplateRequest = Partial<Omit<TaskTemplate, 'id'>>

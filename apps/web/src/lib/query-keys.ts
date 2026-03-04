@@ -12,6 +12,10 @@ export const queryKeys = {
     dashboard: (query: UsageQuery) =>
       ['usage', 'dashboard', query.startDate, query.endDate, query.mode ?? 'gateway', query.utcOffset ?? ''] as const,
   },
+  tasks: {
+    dashboard: (agentId?: string) => ['tasks', 'dashboard', agentId ?? 'all'] as const,
+    runs: (taskId: string) => ['tasks', 'runs', taskId] as const,
+  },
   skills: {
     list: ['skills', 'list'] as const,
   },

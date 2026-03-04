@@ -1,4 +1,5 @@
 import type { UsageProps, AgentUsage, TimeSeriesPoint } from './types'
+import { useMemo } from 'react'
 
 function formatCost(n: number): string {
   return `$${n.toFixed(2)}`
@@ -150,11 +151,12 @@ export function Usage({
   timeRangeOptions,
   onTimeRangeChange,
 }: UsageProps) {
-  const sortedAgents = [...agents].sort((a, b) => b.cost - a.cost)
+  const sortedAgents = useMemo(() => [...agents].sort((a, b) => b.cost - a.cost), [agents])
+  const sortedModels = useMemo(() => [...modelBreakdown].sort((a, b) => b.cost - a.cost), [modelBreakdown])
   const maxAgentCost = sortedAgents[0]?.cost ?? 0
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800/60 w-fit">
         {timeRangeOptions.map(({ value, label }) => (
           <button
@@ -276,7 +278,7 @@ export function Usage({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800/60">
-              {[...modelBreakdown].sort((a, b) => b.cost - a.cost).map((model) => (
+              {sortedModels.map((model) => (
                 <tr key={model.modelId} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
                   <td className="px-4 py-3">
                     <div>

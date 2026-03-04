@@ -104,13 +104,21 @@ function SkillRow({ skill, isSelected, onSelect, onToggle }: SkillRowProps) {
   const cat = CATEGORY_CONFIG[skill.category]
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelect()
+        }
+      }}
       className={`w-full flex items-center gap-3 py-3.5 text-left transition-colors ${
         isSelected
           ? 'bg-sky-50 dark:bg-sky-950/30 border-l-2 border-l-sky-400 pl-[14px] pr-4'
           : 'hover:bg-slate-50/60 dark:hover:bg-slate-800/30 px-4'
-      }`}
+      } focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500`}
     >
       <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0 ${cat.bg} ${cat.text}`}>
         {cat.icon}
@@ -147,7 +155,7 @@ function SkillRow({ skill, isSelected, onSelect, onToggle }: SkillRowProps) {
       <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
         <Toggle enabled={skill.isEnabled} onChange={onToggle} />
       </div>
-    </button>
+    </div>
   )
 }
 

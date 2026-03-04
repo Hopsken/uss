@@ -1,4 +1,6 @@
 import type {
+  UsageQuery,
+  UsageResponse,
   AgentDetailResponse,
   AgentsListResponse,
   BridgeResponse,
@@ -70,5 +72,23 @@ export async function updateAgentModel(
       .json<UpdateAgentModelResponse>()
   } catch (error) {
     return handleApiError(error, 'Failed to update agent model')
+  }
+}
+
+export async function fetchUsage(query: UsageQuery): Promise<UsageResponse> {
+  try {
+    return await api
+      .get('v1/usage', {
+        searchParams: {
+          startDate: query.startDate,
+          endDate: query.endDate,
+          mode: query.mode,
+          utcOffset: query.utcOffset,
+        },
+        cache: 'no-store',
+      })
+      .json<UsageResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to fetch usage')
   }
 }

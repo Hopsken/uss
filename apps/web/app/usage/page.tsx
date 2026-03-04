@@ -1,10 +1,5 @@
-import { SectionPlaceholder } from '@/components/SectionPlaceholder'
+import { UsageClient } from '@/components/usage'
 
 export default function UsagePage() {
-  return (
-    <SectionPlaceholder
-      title="Usage"
-      subtitle="Route scaffolded for shell milestone review"
-    />
-  )
+  return <UsageClient />
 }

@@ -70,6 +70,55 @@ export type UsageSnapshot = {
   thisWeek: UsagePeriod
 }
 
+export type UsageDateMode = 'utc' | 'gateway' | 'specific'
+
+export type UsageQuery = {
+  startDate: string
+  endDate: string
+  mode?: UsageDateMode
+  utcOffset?: string
+}
+
+export type UsageSummary = {
+  totalCost: number
+  totalTokens: number
+  conversationCount: number
+  taskRunCount: number
+}
+
+export type TimeSeriesPoint = {
+  date: string
+  cost: number
+  tokens: number
+}
+
+export type AgentUsage = {
+  agentId: string
+  agentName: string
+  cost: number
+  totalTokens: number
+  conversationCount: number
+  taskRunCount: number
+}
+
+export type ModelUsage = {
+  modelId: string
+  modelName: string
+  cost: number
+  totalTokens: number
+  conversationCount: number
+  taskRunCount: number
+}
+
+export type UsageResponse = {
+  startDate: string
+  endDate: string
+  summary: UsageSummary
+  timeSeries: TimeSeriesPoint[]
+  agents: AgentUsage[]
+  modelBreakdown: ModelUsage[]
+}
+
 export type BridgeResponse = {
   agents: BridgeAgent[]
   recentTaskRuns: RecentTaskRun[]

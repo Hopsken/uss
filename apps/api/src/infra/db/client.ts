@@ -1,5 +1,6 @@
-import { createDb } from "@uss/db";
+import { createDb, type UssDb, type UssSchema } from "@uss/db";
 
-const { db, schema } = createDb(process.env.DATABASE_URL);
+const database = createDb(process.env.DATABASE_URL);
 
-export { db, schema };
+export const db: UssDb = database.db;
+export const schema: UssSchema = database.schema;

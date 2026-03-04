@@ -28,7 +28,7 @@ import type {
 } from '@uss/shared'
 import ky, { HTTPError } from 'ky'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8787'
+const API_BASE_URL = '/'
 const api = ky.create({
   prefixUrl: API_BASE_URL,
   credentials: 'include',

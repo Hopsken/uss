@@ -2,8 +2,8 @@ import type { NextRequest } from 'next/server'
 
 const API_BASE_URL = process.env.API_INTERNAL_BASE_URL ?? 'http://127.0.0.1:8787'
 
-async function proxyAuth(request: NextRequest, path: string[]): Promise<Response> {
-  const target = new URL(`/v1/auth/${path.join('/')}`, API_BASE_URL)
+async function proxyApi(request: NextRequest, path: string[]): Promise<Response> {
+  const target = new URL(`/v1/${path.join('/')}`, API_BASE_URL)
   target.search = request.nextUrl.search
 
   const headers = new Headers(request.headers)
@@ -50,7 +50,7 @@ async function proxyAuth(request: NextRequest, path: string[]): Promise<Response
 function buildHandler() {
   return async (request: NextRequest, context: { params: Promise<{ path: string[] }> }) => {
     const params = await context.params
-    return proxyAuth(request, params.path ?? [])
+    return proxyApi(request, params.path ?? [])
   }
 }
 

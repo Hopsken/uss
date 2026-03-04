@@ -1,0 +1,13 @@
+node_modules
+.pnpm-store
+.turbo
+.next
+dist
+coverage
+tmp
+.git
+.gitignore
+.env
+.env.local
+*.db
+*.db-journal

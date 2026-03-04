@@ -31,7 +31,7 @@ Copy `.env.example` → `apps/api/.env`. Key vars:
 | -------------------------- | ------------------------ | ---------------------- |
 | `DATABASE_URL`             | `./apps/api/data/uss.db` | SQLite path            |
 | `API_PORT`                 | `8787`                   | Elysia API port        |
-| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8787`  | Web → API              |
+| `API_INTERNAL_BASE_URL`    | `http://127.0.0.1:8787`  | Web server/proxy → API |
 | `OPENCLAW_GATEWAY_URL`     | `ws://localhost:18789`   | OpenClaw WS gateway    |
 | `OPENCLAW_GATEWAY_TOKEN`   | _(empty)_                | Auth token for gateway |
 

@@ -2,7 +2,7 @@ import path from 'node:path'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 
-import * as schema from './schema'
+import * as schema from './schema.js'
 
 function resolveDatabaseUrl(rawUrl: string): string {
   if (
@@ -26,3 +26,4 @@ export function createDb(databaseUrl = process.env.DATABASE_URL ?? './apps/api/d
 }
 
 export type UssDb = ReturnType<typeof createDb>['db']
+export type UssSchema = ReturnType<typeof createDb>['schema']

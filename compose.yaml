@@ -1,0 +1,41 @@
+services:
+  uss:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: uss:local
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_PORT: 8787
+      API_INTERNAL_BASE_URL: http://127.0.0.1:8787
+      DATABASE_URL: file:/var/lib/uss/uss.db
+      API_CORS_ORIGINS: http://localhost:3000
+      USS_PUBLIC_BASE_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: change-this-secret
+      AUTH_BOOTSTRAP_RESET_SECRET: change-this-reset-secret
+      OPENCLAW_GATEWAY_URL: ws://host.docker.internal:18789
+      OPENCLAW_GATEWAY_TOKEN: ""
+      OPENCLAW_GATEWAY_TIMEOUT_MS: 8000
+    volumes:
+      - uss-data:/var/lib/uss
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/v1/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  uss-data:

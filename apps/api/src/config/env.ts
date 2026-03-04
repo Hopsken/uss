@@ -43,6 +43,10 @@ function resolveAuthSecret(): string {
   return "uss-dev-only-better-auth-secret-change-me";
 }
 
+function resolvePublicBaseUrl(port: number): string {
+  return process.env.USS_PUBLIC_BASE_URL?.trim() || `http://localhost:${port}`;
+}
+
 export function resolveApiEnv(): ApiEnv {
   const rawPort = Number(process.env.API_PORT ?? 8787);
   const corsOrigins =
@@ -59,7 +63,7 @@ export function resolveApiEnv(): ApiEnv {
     corsOrigins,
     auth: {
       secret: resolveAuthSecret(),
-      baseUrl: process.env.BETTER_AUTH_BASE_URL ?? `http://localhost:${port}`,
+      baseUrl: resolvePublicBaseUrl(port),
       trustedOrigins: corsOrigins,
       passkeyRpId: resolvePasskeyRpId(passkeyOrigin),
       passkeyOrigin,

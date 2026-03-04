@@ -13,12 +13,12 @@ services:
       API_INTERNAL_BASE_URL: http://127.0.0.1:8787
       DATABASE_URL: file:/var/lib/uss/uss.db
       API_CORS_ORIGINS: http://localhost:3000
-      USS_PUBLIC_BASE_URL: http://localhost:3000
-      BETTER_AUTH_SECRET: change-this-secret
-      AUTH_BOOTSTRAP_RESET_SECRET: change-this-reset-secret
-      OPENCLAW_GATEWAY_URL: ws://host.docker.internal:18789
-      OPENCLAW_GATEWAY_TOKEN: ""
       OPENCLAW_GATEWAY_TIMEOUT_MS: 8000
+      USS_PUBLIC_BASE_URL:
+      AUTH_BOOTSTRAP_RESET_SECRET:
+      BETTER_AUTH_SECRET:
+      OPENCLAW_GATEWAY_URL:
+      OPENCLAW_GATEWAY_TOKEN:
     volumes:
       - uss-data:/var/lib/uss
     extra_hosts:

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@uss/db": "workspace:*",
+    "@uss/gateway-client": "workspace:*",
     "@uss/shared": "workspace:*",
     "@elysiajs/node": "^1.4.3",
     "drizzle-orm": "^0.35.1",

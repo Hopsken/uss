@@ -68,3 +68,11 @@ a {
   .uss-sidebar-desktop { display: flex; }
   .uss-sidebar-tablet  { display: none; }
 }
+
+@keyframes uss-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.uss-status-busy {
+  animation: uss-pulse 1.5s ease-in-out infinite;
+}

@@ -1,6 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { createDb } from "@uss/db";
-import { sql } from "drizzle-orm";
 import type {
   BridgeAgent,
   BridgeResponse,
@@ -11,57 +9,7 @@ import type {
   SystemHealth,
   TaskRunStatus,
 } from "@uss/shared";
-import type { GatewayHelloOk } from "@uss/gateway-client";
-import { gateway } from "./gateway.js";
-
-const SNAPSHOT_ID = "current";
-
-type JsonObject = Record<string, unknown>;
-
-type GatewayBridgeRaw = {
-  hello: GatewayHelloOk | null;
-  agentsList: unknown;
-  status: unknown;
-  usageToday: unknown;
-  usageWeek: unknown;
-  usageStatus: unknown;
-  cronRuns: unknown;
-  cronList: unknown;
-};
-
-const { db, schema } = createDb(process.env.DATABASE_URL);
-let ensureDbPromise: Promise<void> | null = null;
-
-function ensureDb(): Promise<void> {
-  if (ensureDbPromise) {
-    return ensureDbPromise;
-  }
-
-  ensureDbPromise = (async () => {
-    await db.run(
-      sql.raw(`
-      CREATE TABLE IF NOT EXISTS bootstrap_meta (
-        key TEXT PRIMARY KEY,
-        value TEXT NOT NULL,
-        updated_at INTEGER NOT NULL
-      );
-    `),
-    );
-    await db.run(
-      sql.raw(`
-      CREATE TABLE IF NOT EXISTS bridge_snapshot (
-        id TEXT PRIMARY KEY,
-        payload TEXT NOT NULL,
-        source TEXT NOT NULL,
-        gateway_url TEXT,
-        synced_at INTEGER NOT NULL
-      );
-    `),
-    );
-  })();
-
-  return ensureDbPromise;
-}
+import type { BridgeRawPayload, JsonObject } from "./bridge.model.js";
 
 function asObject(value: unknown): JsonObject | null {
   if (!value || typeof value !== "object") {
@@ -102,12 +50,15 @@ function normalizeTaskRunStatus(value: unknown): TaskRunStatus {
   if (value === "ok") {
     return "completed";
   }
+
   if (value === "error") {
     return "failed";
   }
+
   if (value === "skipped") {
     return "scheduled";
   }
+
   if (value === "running") {
     return "running";
   }
@@ -147,33 +98,7 @@ function pickArrayPayload(payload: unknown, keys: string[]): JsonObject[] {
   return [];
 }
 
-async function fetchGatewayData(): Promise<GatewayBridgeRaw> {
-  await gateway.ensureConnected();
-
-  const [agentsList, status, usageToday, usageWeek, usageStatus, cronRuns, cronList] =
-    await Promise.all([
-      gateway.request("agents.list", {}),
-      gateway.request("status", {}),
-      gateway.request("usage.cost", { days: 1, mode: "utc" }),
-      gateway.request("usage.cost", { days: 7, mode: "utc" }),
-      gateway.request("usage.status", {}),
-      gateway.request("cron.runs", { scope: "all", limit: 8, sortDir: "desc" }),
-      gateway.request("cron.list", { includeDisabled: true, limit: 200 }),
-    ]);
-
-  return {
-    hello: gateway.helloPayload,
-    agentsList,
-    status,
-    usageToday,
-    usageWeek,
-    usageStatus,
-    cronRuns,
-    cronList,
-  };
-}
-
-function mapBridgePayload(raw: GatewayBridgeRaw): BridgeResponse {
+export function mapBridgePayload(raw: BridgeRawPayload): BridgeResponse {
   const agentsPayload = asObject(raw.agentsList);
   const statusPayload = asObject(raw.status);
   const usageTodayPayload = asObject(raw.usageToday);
@@ -212,7 +137,7 @@ function mapBridgePayload(raw: GatewayBridgeRaw): BridgeResponse {
     }
 
     const recent = asArray<JsonObject>(entry.recent);
-    const newest = recent[0];
+    const newest = recent.at(0);
     const updatedAt = asNumber(newest ? newest.updatedAt : null);
     const flags = asArray<string>(newest ? newest.flags : null);
     const model = asString(newest ? newest.model : null);
@@ -237,8 +162,7 @@ function mapBridgePayload(raw: GatewayBridgeRaw): BridgeResponse {
   const listedAgents = asArray<JsonObject>(agentsPayload?.agents);
   const agents: BridgeAgent[] = listedAgents.map((entry) => {
     const id = asString(entry.id) ?? randomUUID();
-    const name =
-      asString(entry.name) ?? asString(asObject(entry.identity)?.name) ?? id;
+    const name = asString(entry.name) ?? asString(asObject(entry.identity)?.name) ?? id;
 
     return {
       id,
@@ -246,51 +170,42 @@ function mapBridgePayload(raw: GatewayBridgeRaw): BridgeResponse {
       role: "Agent",
       avatarUrl: asString(asObject(entry.identity)?.avatarUrl) ?? null,
       model: modelByAgent.get(id) ?? "unknown",
-      status:
-        statusByAgent.get(id) ?? (runningJobByAgent.has(id) ? "busy" : "idle"),
+      status: statusByAgent.get(id) ?? (runningJobByAgent.has(id) ? "busy" : "idle"),
       currentTask: runningJobByAgent.get(id) ?? null,
     };
   });
 
-  const recentTaskRuns: RecentTaskRun[] = cronRunsEntries
-    .slice(0, 8)
-    .map((entry, idx) => {
-      const jobId = asString(entry.jobId) ?? `job-${idx}`;
-      const jobName = asString(entry.jobName) ?? jobId;
-      const startedAtMs = asNumber(entry.runAtMs) ?? asNumber(entry.ts);
-      const durationMs = asNumber(entry.durationMs);
-      const agentMatch = jobs.find((job) => asString(job.id) === jobId);
-      const agentId =
-        asString(agentMatch ? agentMatch.agentId : null) ?? "unknown";
-      const agentName =
-        agents.find((agent) => agent.id === agentId)?.name ??
-        (agentId === "unknown" ? "Unknown" : agentId);
-      const startedAt = nowIsoFromMs(startedAtMs);
+  const recentTaskRuns: RecentTaskRun[] = cronRunsEntries.slice(0, 8).map((entry, idx) => {
+    const jobId = asString(entry.jobId) ?? `job-${idx}`;
+    const jobName = asString(entry.jobName) ?? jobId;
+    const startedAtMs = asNumber(entry.runAtMs) ?? asNumber(entry.ts);
+    const durationMs = asNumber(entry.durationMs);
+    const agentMatch = jobs.find((job) => asString(job.id) === jobId);
+    const agentId = asString(agentMatch ? agentMatch.agentId : null) ?? "unknown";
+    const knownAgent = agents.find((agent) => agent.id === agentId);
+    const agentName = knownAgent ? knownAgent.name : agentId === "unknown" ? "Unknown" : agentId;
+    const startedAt = nowIsoFromMs(startedAtMs);
 
-      return {
-        id: `run-${jobId}-${startedAtMs ?? idx}`,
-        taskName: jobName,
-        agentId,
-        agentName,
-        status: normalizeTaskRunStatus(entry.status),
-        startedAt,
-        completedAt:
-          durationMs && startedAtMs
-            ? nowIsoFromMs(startedAtMs + durationMs)
-            : null,
-        error: asString(entry.error),
-      };
-    });
+    return {
+      id: `run-${jobId}-${startedAtMs ?? idx}`,
+      taskName: jobName,
+      agentId,
+      agentName,
+      status: normalizeTaskRunStatus(entry.status),
+      startedAt,
+      completedAt: durationMs && startedAtMs ? nowIsoFromMs(startedAtMs + durationMs) : null,
+      error: asString(entry.error),
+    };
+  });
 
-  const providerStatusEntries = asArray<JsonObject>(
-    usageStatusPayload?.providers,
-  );
+  const providerStatusEntries = asArray<JsonObject>(usageStatusPayload?.providers);
 
   const providerModels = new Map<string, string[]>();
   const statusRecent = asArray<JsonObject>(statusSessions?.recent);
   for (const row of statusRecent) {
     const provider = asString(row.modelProvider);
     const model = asString(row.model);
+
     if (!provider || !model) {
       continue;
     }
@@ -299,6 +214,7 @@ function mapBridgePayload(raw: GatewayBridgeRaw): BridgeResponse {
     if (!current.includes(model)) {
       current.push(model);
     }
+
     providerModels.set(provider, current);
   }
 
@@ -344,6 +260,7 @@ function mapBridgePayload(raw: GatewayBridgeRaw): BridgeResponse {
     0,
     Math.floor((asNumber(raw.hello?.snapshot?.uptimeMs) ?? 0) / 1000),
   );
+
   const systemHealth: SystemHealth = {
     openclaw: {
       status: inferOpenClawStatus({
@@ -360,98 +277,61 @@ function mapBridgePayload(raw: GatewayBridgeRaw): BridgeResponse {
   const todayTotals = asObject(usageTodayPayload?.totals);
   const weekTotals = asObject(usageWeekPayload?.totals);
 
-  const usageSnapshot = {
-    today: {
-      costUsd: asNumber(todayTotals?.totalCost) ?? 0,
-      tokens: Math.round(asNumber(todayTotals?.totalTokens) ?? 0),
-      conversations: Math.max(
-        0,
-        asArray(asObject(usageTodayPayload)?.sessions).length,
-      ),
-    },
-    thisWeek: {
-      costUsd: asNumber(weekTotals?.totalCost) ?? 0,
-      tokens: Math.round(asNumber(weekTotals?.totalTokens) ?? 0),
-      conversations: Math.max(
-        0,
-        asArray(asObject(usageWeekPayload)?.sessions).length,
-      ),
-    },
-  };
-
   return {
     agents,
     recentTaskRuns,
     systemHealth,
-    usageSnapshot,
+    usageSnapshot: {
+      today: {
+        costUsd: asNumber(todayTotals?.totalCost) ?? 0,
+        tokens: Math.round(asNumber(todayTotals?.totalTokens) ?? 0),
+        conversations: Math.max(0, asArray(asObject(usageTodayPayload)?.sessions).length),
+      },
+      thisWeek: {
+        costUsd: asNumber(weekTotals?.totalCost) ?? 0,
+        tokens: Math.round(asNumber(weekTotals?.totalTokens) ?? 0),
+        conversations: Math.max(0, asArray(asObject(usageWeekPayload)?.sessions).length),
+      },
+    },
   };
 }
 
-async function saveSnapshot(params: {
-  payload: BridgeResponse;
-  source: string;
-  gatewayUrl: string;
-}): Promise<void> {
-  await ensureDb();
-  await db
-    .insert(schema.bridgeSnapshot)
-    .values({
-      id: SNAPSHOT_ID,
-      payload: JSON.stringify(params.payload),
-      source: params.source,
-      gatewayUrl: params.gatewayUrl,
-      syncedAt: new Date(),
-    })
-    .onConflictDoUpdate({
-      target: schema.bridgeSnapshot.id,
-      set: {
-        payload: JSON.stringify(params.payload),
-        source: params.source,
-        gatewayUrl: params.gatewayUrl,
-        syncedAt: new Date(),
+export function createDegradedBridgeResponse(reason: string): BridgeResponse {
+  const occurredAt = new Date().toISOString();
+
+  return {
+    agents: [],
+    recentTaskRuns: [],
+    systemHealth: {
+      openclaw: {
+        status: "error",
+        uptimeSeconds: 0,
+        version: "unknown",
       },
-    });
-}
-
-async function loadSnapshot(): Promise<BridgeResponse | null> {
-  await ensureDb();
-  const rows = await db.select().from(schema.bridgeSnapshot).limit(1);
-  const row = rows[0];
-
-  if (!row) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(row.payload) as BridgeResponse;
-  } catch {
-    return null;
-  }
-}
-
-export async function loadBridgeData(): Promise<BridgeResponse> {
-  const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL ?? "ws://localhost:18789";
-
-  try {
-    const gatewayRaw = await fetchGatewayData();
-    const payload = mapBridgePayload(gatewayRaw);
-    await saveSnapshot({
-      payload,
-      source: "gateway",
-      gatewayUrl,
-    });
-
-    return payload;
-  } catch (e) {
-    console.error("Gateway fetch failed:", e);
-    const fallback = await loadSnapshot();
-
-    if (fallback) {
-      return fallback;
-    }
-
-    throw new Error(
-      "OpenClaw gateway unavailable and no cached bridge snapshot found in database",
-    );
-  }
+      providers: [],
+      recentErrors: [
+        {
+          id: "err-degraded-0",
+          level: "warning",
+          message: reason,
+          agentId: null,
+          agentName: null,
+          taskName: null,
+          occurredAt,
+        },
+      ],
+    },
+    usageSnapshot: {
+      today: {
+        costUsd: 0,
+        tokens: 0,
+        conversations: 0,
+      },
+      thisWeek: {
+        costUsd: 0,
+        tokens: 0,
+        conversations: 0,
+      },
+    },
+  };
 }

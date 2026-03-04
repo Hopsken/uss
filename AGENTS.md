@@ -91,6 +91,7 @@ Product plan lives in `product-plan/`. Milestones: Shell → Bridge → Agents �
 
 - For OpenClaw Gateway event/method integration in this repo, read:
   - `docs/openclaw-gateway-events.md`
+  - `docs/openclaw-gateway-event-discovery.md` (how to locate definitions in upstream OpenClaw repo)
 
 ## Notes
 

@@ -1,10 +1,5 @@
-import { SectionPlaceholder } from '@/components/SectionPlaceholder'
+import { ActivityClient } from '@/components/activity'
 
 export default function ActivityPage() {
-  return (
-    <SectionPlaceholder
-      title="Activity"
-      subtitle="Route scaffolded for shell milestone review"
-    />
-  )
+  return <ActivityClient />
 }

@@ -2,7 +2,7 @@ import { Alert, Box } from '@mantine/core'
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { notFound } from 'next/navigation'
 import { AgentDetailClient } from '@/components/agents/AgentDetailClient'
-import { fetchAgentDetail } from '@/lib/api'
+import { fetchAgentDetailServer } from '@/lib/api-server'
 import { queryKeys } from '@/lib/query-keys'
 import { getQueryClient } from '@/lib/react-query'
 
@@ -19,7 +19,7 @@ export default async function AgentDetailPage({ params }: PageProps) {
     const queryClient = getQueryClient()
     await queryClient.prefetchQuery({
       queryKey: queryKeys.agents.detail(agentId),
-      queryFn: () => fetchAgentDetail(agentId),
+      queryFn: () => fetchAgentDetailServer(agentId),
     })
 
     return (

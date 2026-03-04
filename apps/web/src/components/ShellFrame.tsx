@@ -17,11 +17,16 @@ const NAV_ITEMS = [
 export function ShellFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
+  const isAuthRoute = pathname.startsWith('/auth')
 
   const items = NAV_ITEMS.map((item) => ({
     ...item,
     isActive: item.href === '/agents' ? pathname.startsWith('/agents') : pathname === item.href,
   }))
+
+  if (isAuthRoute) {
+    return <>{children}</>
+  }
 
   return (
     <AppShell navigationItems={items} onNavigate={(href) => router.push(href)}>

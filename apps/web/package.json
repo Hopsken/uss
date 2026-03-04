@@ -11,10 +11,12 @@
     "test": "echo 'no tests yet'"
   },
   "dependencies": {
+    "@better-auth/passkey": "^1.5.3",
     "@mantine/core": "^7.14.1",
     "@mantine/hooks": "^7.14.1",
     "@tanstack/react-query": "^5.66.0",
     "@uss/shared": "workspace:*",
+    "better-auth": "^1.5.3",
     "ky": "^1.7.5",
     "lucide-react": "^0.468.0",
     "next": "^15.0.3",

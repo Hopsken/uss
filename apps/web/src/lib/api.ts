@@ -1,4 +1,7 @@
 import type {
+  BootstrapStartRequest,
+  BootstrapStartResponse,
+  BootstrapStatusResponse,
   AssignSkillRequest,
   AssignSkillResponse,
   UsageQuery,
@@ -28,6 +31,7 @@ import ky, { HTTPError } from 'ky'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8787'
 const api = ky.create({
   prefixUrl: API_BASE_URL,
+  credentials: 'include',
 })
 
 async function parseError(res: Response, fallback: string): Promise<Error> {
@@ -53,6 +57,22 @@ export async function fetchBridgeData(): Promise<BridgeResponse> {
       .json<BridgeResponse>()
   } catch (error) {
     return handleApiError(error, 'Failed to fetch bridge data')
+  }
+}
+
+export async function fetchBootstrapStatus(): Promise<BootstrapStatusResponse> {
+  try {
+    return await api.get('v1/auth/bootstrap/status', { cache: 'no-store' }).json<BootstrapStatusResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to fetch bootstrap status')
+  }
+}
+
+export async function startBootstrap(body: BootstrapStartRequest): Promise<BootstrapStartResponse> {
+  try {
+    return await api.post('v1/auth/bootstrap/start', { json: body }).json<BootstrapStartResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to complete bootstrap')
   }
 }
 

@@ -13,6 +13,8 @@ export function buildApp() {
       cors({
         origin: env.corsOrigins,
         methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        credentials: true,
+        allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
       }),
     )
     .use(errorHandlerPlugin)

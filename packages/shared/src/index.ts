@@ -4,6 +4,30 @@ export type HealthResponse = {
   timestamp: string
 }
 
+export type ApiErrorResponse = {
+  error: string
+}
+
+export type BootstrapStatusResponse = {
+  needsBootstrap: boolean
+}
+
+export type BootstrapStartRequest = {
+  email: string
+  name: string
+  password: string
+}
+
+export type BootstrapStartResponse = {
+  ok: true
+  userId: string
+  bootstrapComplete: boolean
+}
+
+export type BootstrapResetRequest = {
+  resetSecret: string
+}
+
 export type AgentStatus = 'idle' | 'busy' | 'error'
 export type TaskRunStatus = 'running' | 'completed' | 'failed' | 'scheduled'
 export type ProviderStatus = 'healthy' | 'degraded' | 'down'

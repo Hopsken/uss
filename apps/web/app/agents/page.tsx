@@ -1,7 +1,7 @@
 import { Alert, Box } from '@mantine/core'
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { AgentsListClient } from '@/components/agents/AgentsListClient'
-import { fetchAgentsList } from '@/lib/api'
+import { fetchAgentsListServer } from '@/lib/api-server'
 import { queryKeys } from '@/lib/query-keys'
 import { getQueryClient } from '@/lib/react-query'
 
@@ -11,7 +11,7 @@ export default async function AgentsPage() {
 
     await queryClient.prefetchQuery({
       queryKey: queryKeys.agents.list,
-      queryFn: fetchAgentsList,
+      queryFn: fetchAgentsListServer,
     })
 
     return (

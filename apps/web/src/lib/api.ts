@@ -1,9 +1,16 @@
 import type {
+  AssignSkillRequest,
+  AssignSkillResponse,
   UsageQuery,
   UsageResponse,
   AgentDetailResponse,
   AgentsListResponse,
   BridgeResponse,
+  SaveSkillConfigRequest,
+  SaveSkillConfigResponse,
+  SkillsResponse,
+  ToggleSkillRequest,
+  ToggleSkillResponse,
   UpdateAgentModelRequest,
   UpdateAgentModelResponse,
 } from '@uss/shared'
@@ -90,5 +97,60 @@ export async function fetchUsage(query: UsageQuery): Promise<UsageResponse> {
       .json<UsageResponse>()
   } catch (error) {
     return handleApiError(error, 'Failed to fetch usage')
+  }
+}
+
+export async function fetchSkills(): Promise<SkillsResponse> {
+  try {
+    return await api
+      .get('v1/skills', { cache: 'no-store' })
+      .json<SkillsResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to fetch skills')
+  }
+}
+
+export async function toggleSkill(
+  skillId: string,
+  body: ToggleSkillRequest,
+): Promise<ToggleSkillResponse> {
+  try {
+    return await api
+      .patch(`v1/skills/${encodeURIComponent(skillId)}/toggle`, {
+        json: body,
+      })
+      .json<ToggleSkillResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to toggle skill')
+  }
+}
+
+export async function saveSkillConfig(
+  skillId: string,
+  body: SaveSkillConfigRequest,
+): Promise<SaveSkillConfigResponse> {
+  try {
+    return await api
+      .put(`v1/skills/${encodeURIComponent(skillId)}/config`, {
+        json: body,
+      })
+      .json<SaveSkillConfigResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to save skill config')
+  }
+}
+
+export async function assignSkill(
+  skillId: string,
+  body: AssignSkillRequest,
+): Promise<AssignSkillResponse> {
+  try {
+    return await api
+      .post(`v1/skills/${encodeURIComponent(skillId)}/assign`, {
+        json: body,
+      })
+      .json<AssignSkillResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to assign skill')
   }
 }

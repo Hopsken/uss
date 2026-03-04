@@ -1,10 +1,5 @@
-import { SectionPlaceholder } from '@/components/SectionPlaceholder'
+import { SkillsClient } from '@/components/skills'
 
 export default function SkillsPage() {
-  return (
-    <SectionPlaceholder
-      title="Skills"
-      subtitle="Route scaffolded for shell milestone review"
-    />
-  )
+  return <SkillsClient />
 }

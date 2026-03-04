@@ -199,3 +199,98 @@ export type UpdateAgentModelResponse = {
   modelId: string
   syncedAt: string
 }
+
+export type SkillCategory =
+  | 'web'
+  | 'calendar'
+  | 'communication'
+  | 'code'
+  | 'notes'
+  | 'productivity'
+  | 'system'
+
+export type ConfigStatus = 'configured' | 'needs_setup'
+
+export type SkillConfig = {
+  key: string
+  label: string
+  value: string
+  isSecret: boolean
+}
+
+export type Skill = {
+  id: string
+  name: string
+  description: string
+  category: SkillCategory
+  isEnabled: boolean
+  configStatus: ConfigStatus
+  lastUsedAt: string | null
+  config: SkillConfig[]
+  instructions?: string
+}
+
+export type AgentSkillGroup = {
+  agentId: string
+  agentName: string
+  skills: Skill[]
+}
+
+export type SkillsProps = {
+  systemSkills: Skill[]
+  agentGroups: AgentSkillGroup[]
+  selectedSkillId?: string | null
+  selectedAgentId?: string | null
+  onToggleSkill?: (skillId: string, agentId: string | null, enabled: boolean) => void
+  onSelectSkill?: (skillId: string, agentId: string | null) => void
+  onClosePanel?: () => void
+  onSaveConfig?: (skillId: string, agentId: string | null, config: SkillConfig[]) => void
+  onAssignSkill?: (skillId: string, targetAgentId: string) => void
+}
+
+export type SkillsResponse = {
+  systemSkills: Skill[]
+  agentGroups: AgentSkillGroup[]
+  syncedAt: string
+}
+
+export type ToggleSkillRequest = {
+  agentId: string | null
+  enabled: boolean
+}
+
+export type ToggleSkillResponse = {
+  ok: true
+  skillId: string
+  agentId: string | null
+  enabled: boolean
+  syncedAt: string
+}
+
+export type SaveSkillConfigRequest = {
+  agentId: string | null
+  config: SkillConfig[]
+}
+
+export type SaveSkillConfigResponse = {
+  ok: true
+  skillId: string
+  agentId: string | null
+  config: SkillConfig[]
+  syncedAt: string
+}
+
+export type AssignSkillRequest = {
+  sourceAgentId: string | null
+  targetAgentId: string
+}
+
+export type AssignSkillResponse = {
+  ok: true
+  skillId: string
+  sourceAgentId: string | null
+  targetAgentId: string
+  applied: boolean
+  reason: string | null
+  syncedAt: string
+}

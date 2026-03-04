@@ -12,4 +12,7 @@ export const queryKeys = {
     dashboard: (query: UsageQuery) =>
       ['usage', 'dashboard', query.startDate, query.endDate, query.mode ?? 'gateway', query.utcOffset ?? ''] as const,
   },
+  skills: {
+    list: ['skills', 'list'] as const,
+  },
 }

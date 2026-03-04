@@ -6,9 +6,9 @@
   --color-primary: #0ea5e9;
   --color-secondary: #f59e0b;
   --color-neutral: #0f172a;
-  --font-heading: 'Space Grotesk', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-heading: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
 }
 
 * {
@@ -23,7 +23,7 @@ body {
 
 body {
   font-family: var(--font-body);
-  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+  /* background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%); */
 }
 
 a {
@@ -46,11 +46,13 @@ a {
 
 /* Nav button hover states */
 .uss-nav-btn {
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
-.uss-nav-btn:not([data-active='true']):hover {
+.uss-nav-btn:not([data-active="true"]):hover {
   background-color: #f1f5f9; /* slate-100 */
-  color: #0f172a;             /* slate-900 */
+  color: #0f172a; /* slate-900 */
 }
 
 /* Sidebar responsive visibility */
@@ -65,17 +67,30 @@ a {
 }
 
 @media (min-width: 48em) {
-  .uss-sidebar-tablet { display: flex; }
-  .uss-mobile-header  { display: none; }
+  .uss-sidebar-tablet {
+    display: flex;
+  }
+  .uss-mobile-header {
+    display: none;
+  }
 }
 @media (min-width: 75em) {
-  .uss-sidebar-desktop { display: flex; }
-  .uss-sidebar-tablet  { display: none; }
+  .uss-sidebar-desktop {
+    display: flex;
+  }
+  .uss-sidebar-tablet {
+    display: none;
+  }
 }
 
 @keyframes uss-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 .uss-status-busy {
   animation: uss-pulse 1.5s ease-in-out infinite;

@@ -47,7 +47,7 @@ packages/
   config/ — Base tsconfig
 ```
 
-**Data flow:** Next.js Server Components → `GET /v1/bridge` → OpenClaw gateway (WebSocket). API falls back to last SQLite snapshot if gateway is unreachable.
+**Data flow:** Next.js app shell/routes + client-side React Query → `GET /v1/*` API → OpenClaw gateway (WebSocket). API falls back to last SQLite snapshot if gateway is unreachable.
 
 **Package names:** `@uss/api`, `@uss/web`, `@uss/db`, `@uss/shared`
 
@@ -58,7 +58,7 @@ packages/
 
 ### Web (`apps/web`)
 
-- Next.js App Router; pages are in `app/` (Server Components doing data fetch)
+- Next.js App Router; pages are in `app/` (shell/routing boundaries) and dashboard data is fetched client-side with React Query
 - `src/lib/api.ts` — typed fetch wrappers against the API
 - `src/lib/theme.ts` — Mantine theme (sky/amber/slate palette)
 - `src/components/shell/` — `AppShell`, `MainNav`, shell types
@@ -92,6 +92,11 @@ Product plan lives in `product-plan/`. Milestones: Shell → Bridge → Agents �
 - For OpenClaw Gateway event/method integration in this repo, read:
   - `docs/openclaw-gateway-events.md`
   - `docs/openclaw-gateway-event-discovery.md` (how to locate definitions in upstream OpenClaw repo)
+
+## Frontend Architecture Reference
+
+- Frontend data-fetching decision record:
+  - `docs/frontend-client-query-decision.md`
 
 ## Notes
 

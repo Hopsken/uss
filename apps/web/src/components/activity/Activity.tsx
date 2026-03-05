@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useMemo, useState, type ReactNode } from 'react'
 import {
   Play,
@@ -140,9 +141,11 @@ function EventRow({ event }: { event: ActivityEvent }) {
       <div className={`mt-0.5 w-0.5 shrink-0 self-stretch rounded-full ${statusConf.bar}`} />
 
       <div className="mt-0.5 h-7 w-7 shrink-0 overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
-        <img
+        <Image
           src={`https://robohash.org/${event.agentId}?set=set1&size=56x56`}
           alt={event.agentName}
+          width={28}
+          height={28}
           className="h-full w-full object-cover"
         />
       </div>
@@ -234,9 +237,11 @@ export function Activity({
             {activeAgent ? (
               <>
                 <div className="h-4 w-4 overflow-hidden rounded-full ring-1 ring-slate-200 dark:ring-slate-600">
-                  <img
+                  <Image
                     src={`https://robohash.org/${activeAgent.id}?set=set1&size=32x32`}
                     alt={activeAgent.name}
+                    width={16}
+                    height={16}
                     className="h-full w-full object-cover"
                   />
                 </div>
@@ -283,9 +288,11 @@ export function Activity({
                     }`}
                   >
                     <div className="h-4 w-4 shrink-0 overflow-hidden rounded-full ring-1 ring-slate-200 dark:ring-slate-600">
-                      <img
+                      <Image
                         src={`https://robohash.org/${agent.id}?set=set1&size=32x32`}
                         alt={agent.name}
+                        width={16}
+                        height={16}
                         className="h-full w-full object-cover"
                       />
                     </div>

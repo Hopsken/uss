@@ -1,11 +1,11 @@
 import { createTheme } from '@mantine/core'
 
 export const ussTheme = createTheme({
-  fontFamily: 'Inter, system-ui, sans-serif',
+  fontFamily: 'var(--font-body)',
   headings: {
-    fontFamily: 'Space Grotesk, system-ui, sans-serif',
+    fontFamily: 'var(--font-heading)',
   },
-  fontFamilyMonospace: 'JetBrains Mono, Fira Code, monospace',
+  fontFamilyMonospace: 'var(--font-mono)',
   primaryColor: 'sky',
   colors: {
     sky: ['#f0f9ff', '#e0f2fe', '#bae6fd', '#7dd3fc', '#38bdf8', '#0ea5e9', '#0284c7', '#0369a1', '#075985', '#0c4a6e'],

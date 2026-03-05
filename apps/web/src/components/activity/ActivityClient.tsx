@@ -2,82 +2,13 @@
 
 import { Alert, Box, Button, Center, Loader, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import type { BridgeResponse } from '@uss/shared'
 import { AlertCircle } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { fetchBridgeData } from '@/lib/api'
 import { queryKeys } from '@/lib/query-keys'
+import { activityHttpFeedAdapter } from './activity-feed'
+import { mapBridgeToActivityModel } from './map-activity'
 import { Activity } from './Activity'
-import type { ActivityEvent, EventStatus, EventType } from './types'
-
-function mapTaskStatusToEventStatus(status: 'running' | 'completed' | 'failed' | 'scheduled'): EventStatus {
-  if (status === 'running') return 'running'
-  if (status === 'completed') return 'success'
-  if (status === 'failed') return 'failed'
-  return 'info'
-}
-
-function inferOpenClawEventStatus(status: BridgeResponse['systemHealth']['openclaw']['status']): EventStatus {
-  if (status === 'running') return 'success'
-  if (status === 'error') return 'failed'
-  return 'info'
-}
-
-function mapBridgeToActivityModel(data: BridgeResponse): { events: ActivityEvent[]; agents: { id: string; name: string }[] } {
-  const events: ActivityEvent[] = []
-
-  for (const run of data.recentTaskRuns) {
-    events.push({
-      id: `task-${run.id}`,
-      agentId: run.agentId,
-      agentName: run.agentName,
-      eventType: 'task_run',
-      description: run.error ? `${run.taskName} - ${run.error}` : run.taskName,
-      status: mapTaskStatusToEventStatus(run.status),
-      occurredAt: run.completedAt ?? run.startedAt,
-    })
-  }
-
-  for (const err of data.systemHealth.recentErrors) {
-    events.push({
-      id: `system-error-${err.id}`,
-      agentId: err.agentId ?? 'system',
-      agentName: err.agentName ?? 'System',
-      eventType: 'system',
-      description: err.taskName ? `${err.taskName} - ${err.message}` : err.message,
-      status: err.level === 'error' ? 'failed' : 'info',
-      occurredAt: err.occurredAt,
-    })
-  }
-
-  events.push({
-    id: 'system-openclaw-status',
-    agentId: 'system',
-    agentName: 'System',
-    eventType: 'system',
-    description: `OpenClaw ${data.systemHealth.openclaw.status} (v${data.systemHealth.openclaw.version})`,
-    status: inferOpenClawEventStatus(data.systemHealth.openclaw.status),
-    occurredAt: new Date().toISOString(),
-  })
-
-  for (const provider of data.systemHealth.providers) {
-    const status: EventStatus = provider.status === 'down' ? 'failed' : provider.status === 'degraded' ? 'info' : 'success'
-    events.push({
-      id: `system-provider-${provider.id}`,
-      agentId: 'system',
-      agentName: 'System',
-      eventType: 'system',
-      description: `Provider ${provider.name} is ${provider.status}`,
-      status,
-      occurredAt: new Date().toISOString(),
-    })
-  }
-
-  return {
-    events,
-    agents: data.agents.map((agent) => ({ id: agent.id, name: agent.name })),
-  }
-}
+import type { EventType } from './types'
 
 export function ActivityClient() {
   const [activeAgentId, setActiveAgentId] = useState<string | null>(null)
@@ -85,7 +16,7 @@ export function ActivityClient() {
 
   const activityQuery = useQuery({
     queryKey: queryKeys.activity.feed,
-    queryFn: fetchBridgeData,
+    queryFn: activityHttpFeedAdapter.getSnapshot,
     staleTime: 30_000,
   })
 

@@ -1,4 +1,12 @@
-import type { AgentDetailResponse, AgentsListResponse, BridgeResponse, UsageQuery, UsageResponse } from '@uss/shared'
+import type {
+  AgentDetailResponse,
+  AgentsListResponse,
+  BridgeResponse,
+  SkillsResponse,
+  TasksDashboardResponse,
+  UsageQuery,
+  UsageResponse,
+} from '@uss/shared'
 import { headers } from 'next/headers'
 
 const API_BASE_URL = process.env.API_INTERNAL_BASE_URL ?? 'http://127.0.0.1:8787'
@@ -52,4 +60,18 @@ export async function fetchUsageServer(query: UsageQuery): Promise<UsageResponse
   })
 
   return requestJson<UsageResponse>(`v1/usage?${params.toString()}`)
+}
+
+export async function fetchTasksDashboardServer(agentId?: string): Promise<TasksDashboardResponse> {
+  const params = new URLSearchParams()
+  if (agentId) {
+    params.set('agentId', agentId)
+  }
+
+  const path = params.size > 0 ? `v1/tasks?${params.toString()}` : 'v1/tasks'
+  return requestJson<TasksDashboardResponse>(path)
+}
+
+export async function fetchSkillsServer(): Promise<SkillsResponse> {
+  return requestJson<SkillsResponse>('v1/skills')
 }

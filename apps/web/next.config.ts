@@ -9,6 +9,14 @@ const nextConfig: NextConfig = {
       "lucide-react",
     ],
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'robohash.org',
+      },
+    ],
+  },
 };
 
 export default nextConfig;

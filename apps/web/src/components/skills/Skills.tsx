@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   Globe,
@@ -183,7 +184,13 @@ function AgentGroup({ agentId, agentName, skills, selectedSkillId, onSelectSkill
       >
         {agentId ? (
           <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700 ring-1 ring-slate-200/60 dark:ring-slate-600/40 shrink-0">
-            <img src={`https://robohash.org/${agentId}?set=set1&size=48x48`} alt={agentName} className="w-full h-full object-cover" />
+            <Image
+              src={`https://robohash.org/${agentId}?set=set1&size=48x48`}
+              alt={agentName}
+              width={24}
+              height={24}
+              className="w-full h-full object-cover"
+            />
           </div>
         ) : (
           <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0">
@@ -450,7 +457,13 @@ function SidePanel({ skill, agentId, allAgentGroups, onClose, onSave, onAssign }
                     }`}
                   >
                     <div className="w-4 h-4 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700 shrink-0">
-                      <img src={`https://robohash.org/${group.agentId}?set=set1&size=32x32`} alt={group.agentName} className="w-full h-full object-cover" />
+                      <Image
+                        src={`https://robohash.org/${group.agentId}?set=set1&size=32x32`}
+                        alt={group.agentName}
+                        width={16}
+                        height={16}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <span style={{ fontFamily: '"Space Grotesk", sans-serif' }}>{group.agentName}</span>
                   </button>

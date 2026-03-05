@@ -1,26 +1,27 @@
 'use client'
 
-import { useTransition } from 'react'
-import type { AgentsListResponse } from '@uss/shared'
 import { useRouter } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
 import { AgentsList } from '@/components/agents/AgentsList'
-import { useRefreshOnFocus } from '@/lib/use-refresh-on-focus'
+import { fetchAgentsList } from '@/lib/api'
+import { queryKeys } from '@/lib/query-keys'
 
-export function AgentsListClient({ initialData }: { initialData: AgentsListResponse }) {
+export function AgentsListClient() {
   const router = useRouter()
-  const [isRefreshing, startRefreshTransition] = useTransition()
-  useRefreshOnFocus()
+  const agentsQuery = useQuery({
+    queryKey: queryKeys.agents.list,
+    queryFn: fetchAgentsList,
+  })
 
   return (
     <AgentsList
-      agents={initialData.agents}
-      isSyncing={isRefreshing}
+      agents={agentsQuery.data?.agents ?? []}
+      isSyncing={agentsQuery.isFetching}
       onSelectAgent={(agentId) => router.push(`/agents/${encodeURIComponent(agentId)}`)}
       onSync={() => {
-        startRefreshTransition(() => {
-          router.refresh()
-        })
+        void agentsQuery.refetch()
       }}
+      error={agentsQuery.error instanceof Error ? agentsQuery.error.message : null}
     />
   )
 }

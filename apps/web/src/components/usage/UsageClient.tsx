@@ -3,7 +3,6 @@
 import { Alert, Box, Button, Center, Loader, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import type { UsageQuery } from '@uss/shared'
 import { Usage } from './Usage'
 import { DEFAULT_USAGE_RANGE, RANGE_OPTIONS, resolveRangeQuery } from './range'
 import { fetchUsage } from '@/lib/api'
@@ -11,20 +10,13 @@ import { queryKeys } from '@/lib/query-keys'
 
 interface UsageClientProps {
   initialRange?: string
-  initialRangeQuery?: UsageQuery
 }
 
-export function UsageClient({ initialRange, initialRangeQuery }: UsageClientProps) {
+export function UsageClient({ initialRange }: UsageClientProps) {
   const resolvedInitialRange = initialRange ?? DEFAULT_USAGE_RANGE
   const [activeRange, setActiveRange] = useState<string>(resolvedInitialRange)
 
-  const rangeQuery = useMemo(() => {
-    if (initialRangeQuery && activeRange === resolvedInitialRange) {
-      return initialRangeQuery
-    }
-
-    return resolveRangeQuery(activeRange, new Date())
-  }, [activeRange, initialRangeQuery, resolvedInitialRange])
+  const rangeQuery = useMemo(() => resolveRangeQuery(activeRange, new Date()), [activeRange])
 
   const usageQuery = useQuery({
     queryKey: queryKeys.usage.dashboard(rangeQuery),

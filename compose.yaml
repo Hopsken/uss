@@ -6,6 +6,8 @@ services:
     image: uss:local
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -14,11 +16,6 @@ services:
       DATABASE_URL: file:/var/lib/uss/uss.db
       API_CORS_ORIGINS: http://localhost:3000
       OPENCLAW_GATEWAY_TIMEOUT_MS: 8000
-      USS_PUBLIC_BASE_URL:
-      AUTH_BOOTSTRAP_RESET_SECRET:
-      BETTER_AUTH_SECRET:
-      OPENCLAW_GATEWAY_URL:
-      OPENCLAW_GATEWAY_TOKEN:
     volumes:
       - uss-data:/var/lib/uss
     extra_hosts:

@@ -3,6 +3,7 @@ import type {
   AgentsListResponse,
   UpdateAgentModelResponse,
 } from "@uss/shared";
+import { logger, type Logger } from "../../infra/logging/logger.js";
 import {
   agentsGatewayRepository,
   type AgentFileInfo,
@@ -14,7 +15,7 @@ import {
   mapAgentsListResponse,
 } from "./agents.mapper.js";
 
-type Logger = Pick<Console, "error">;
+type AgentsLogger = Pick<Logger, "error">;
 
 export type AgentsService = {
   loadAgentsList: () => Promise<AgentsListResponse>;
@@ -24,7 +25,7 @@ export type AgentsService = {
 
 export type AgentsServiceDeps = {
   gatewayRepository: AgentsGatewayRepository;
-  logger: Logger;
+  logger: AgentsLogger;
 };
 
 const ROLE_FILES = ["IDENTITY.md", "AGENTS.md"] as const;
@@ -76,7 +77,7 @@ export function createAgentsService(deps: AgentsServiceDeps): AgentsService {
             const identity = await deps.gatewayRepository.fetchAgentIdentity(agentId);
             return [agentId, identity] as const;
           } catch (error) {
-            deps.logger.error("Failed to fetch agent identity", { agentId, error });
+            deps.logger.error({ agentId, error }, "Failed to fetch agent identity");
             return [agentId, null] as const;
           }
         }),
@@ -112,7 +113,7 @@ export function createAgentsService(deps: AgentsServiceDeps): AgentsService {
               rolesByAgent.set(agentId, role);
             }
           } catch (error) {
-            deps.logger.error("Failed to derive role from docs", { agentId, error });
+            deps.logger.error({ agentId, error }, "Failed to derive role from docs");
           }
         }),
       );
@@ -151,11 +152,11 @@ export function createAgentsService(deps: AgentsServiceDeps): AgentsService {
               docsByName.set(file.name, content);
             }
           } catch (error) {
-            deps.logger.error("Failed to fetch config doc", {
+            deps.logger.error({
               agentId,
               filename: file.name,
               error,
-            });
+            }, "Failed to fetch config doc");
           }
         }),
       );
@@ -189,5 +190,5 @@ export function createAgentsService(deps: AgentsServiceDeps): AgentsService {
 
 export const agentsService = createAgentsService({
   gatewayRepository: agentsGatewayRepository,
-  logger: console,
+  logger: logger.child({ module: "agents" }),
 });

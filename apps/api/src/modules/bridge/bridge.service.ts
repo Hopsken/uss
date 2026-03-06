@@ -1,5 +1,6 @@
 import type { BridgeResponse } from "@uss/shared";
 import { resolveApiEnv } from "../../config/env.js";
+import { logger, type Logger } from "../../infra/logging/logger.js";
 import { mapBridgePayload, createDegradedBridgeResponse } from "./bridge.mapper.js";
 import {
   bridgeGatewayRepository,
@@ -10,17 +11,17 @@ import {
   type BridgeSnapshotRepository,
 } from "./bridge.snapshot.repository.js";
 
-type Logger = Pick<Console, "error" | "warn">;
-
 export type BridgeService = {
   loadBridgeData: () => Promise<BridgeResponse>;
 };
+
+type BridgeLogger = Pick<Logger, "error" | "warn">;
 
 export type BridgeServiceDeps = {
   gatewayRepository: BridgeGatewayRepository;
   snapshotRepository: BridgeSnapshotRepository;
   gatewayUrl: string;
-  logger: Logger;
+  logger: BridgeLogger;
 };
 
 export function createBridgeService(deps: BridgeServiceDeps): BridgeService {
@@ -38,7 +39,7 @@ export function createBridgeService(deps: BridgeServiceDeps): BridgeService {
 
         return payload;
       } catch (gatewayError) {
-        deps.logger.error("Gateway fetch failed", gatewayError);
+        deps.logger.error({ error: gatewayError }, "Gateway fetch failed");
       }
 
       const snapshot = await deps.snapshotRepository.loadSnapshot();
@@ -60,5 +61,5 @@ export const bridgeService = createBridgeService({
   gatewayRepository: bridgeGatewayRepository,
   snapshotRepository: bridgeSnapshotRepository,
   gatewayUrl: env.gatewayUrl,
-  logger: console,
+  logger: logger.child({ module: "bridge" }),
 });

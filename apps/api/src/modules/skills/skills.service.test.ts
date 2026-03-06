@@ -1,10 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import pino from "pino";
 import { createSkillsService } from "./skills.service.js";
 
-const logger = {
-  error: () => {},
-};
+const logger = pino({ enabled: false });
 
 test("assignSkill returns noop when target filter is undefined", async () => {
   const service = createSkillsService({

@@ -1,4 +1,5 @@
 import type { UsageQuery, UsageResponse } from "@uss/shared";
+import { logger, type Logger } from "../../infra/logging/logger.js";
 import {
   usageGatewayRepository,
   type UsageGatewayRepository,
@@ -7,7 +8,7 @@ import { usageCacheRepository, type UsageCacheRepository } from "./usage.cache.r
 import { mapUsagePayload } from "./usage.mapper.js";
 import type { UsageGatewayRawPayload } from "./usage.model.js";
 
-type Logger = Pick<Console, "error" | "warn">;
+type UsageLogger = Pick<Logger, "error" | "warn">;
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const CACHE_FALLBACK_MAX_AGE_MS = 24 * 60 * 60 * 1000;
@@ -20,7 +21,7 @@ export type UsageService = {
 export type UsageServiceDeps = {
   gatewayRepository: UsageGatewayRepository;
   cacheRepository: UsageCacheRepository;
-  logger: Logger;
+  logger: UsageLogger;
 };
 
 function normalizeQuery(query: UsageQuery): UsageQuery {
@@ -142,7 +143,7 @@ export function createUsageService(deps: UsageServiceDeps): UsageService {
 
         return mapped.payload;
       } catch (error) {
-        deps.logger.error("Usage live fetch failed", error);
+        deps.logger.error({ error }, "Usage live fetch failed");
 
         if (cached && now - cached.fetchedAtMs <= CACHE_FALLBACK_MAX_AGE_MS) {
           deps.logger.warn("Returning cached usage fallback");
@@ -158,5 +159,5 @@ export function createUsageService(deps: UsageServiceDeps): UsageService {
 export const usageService = createUsageService({
   gatewayRepository: usageGatewayRepository,
   cacheRepository: usageCacheRepository,
-  logger: console,
+  logger: logger.child({ module: "usage" }),
 });

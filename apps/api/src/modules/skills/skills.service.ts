@@ -7,6 +7,7 @@ import type {
   ToggleSkillRequest,
   ToggleSkillResponse,
 } from "@uss/shared";
+import { logger, type Logger } from "../../infra/logging/logger.js";
 import {
   skillsGatewayRepository,
   type SkillsGatewayRepository,
@@ -20,7 +21,7 @@ import {
   parseConfigState,
 } from "./skills.mapper.js";
 
-type Logger = Pick<Console, "error">;
+type SkillsLogger = Pick<Logger, "error">;
 
 export type SkillsService = {
   loadSkills: () => Promise<SkillsResponse>;
@@ -31,7 +32,7 @@ export type SkillsService = {
 
 export type SkillsServiceDeps = {
   gatewayRepository: SkillsGatewayRepository;
-  logger: Logger;
+  logger: SkillsLogger;
 };
 
 export function createSkillsService(deps: SkillsServiceDeps): SkillsService {
@@ -68,10 +69,10 @@ export function createSkillsService(deps: SkillsServiceDeps): SkillsService {
                 skills,
               };
             } catch (error) {
-              deps.logger.error("Failed to fetch skills for agent", {
+              deps.logger.error({
                 agentId: agent.id,
                 error,
-              });
+              }, "Failed to fetch skills for agent");
 
               return {
                 agentId: agent.id,
@@ -150,5 +151,5 @@ export function createSkillsService(deps: SkillsServiceDeps): SkillsService {
 
 export const skillsService = createSkillsService({
   gatewayRepository: skillsGatewayRepository,
-  logger: console,
+  logger: logger.child({ module: "skills" }),
 });

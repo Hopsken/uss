@@ -12,11 +12,12 @@ import type {
   UpdateTaskRequest,
   UpdateTaskTemplateRequest,
 } from '@uss/shared'
+import { logger, type Logger } from '../../infra/logging/logger.js'
 import { mapChangelog, mapRun, mapTask, computeNextRunAtUtc, nextStatusAfterSuccess } from './tasks.mapper.js'
 import { tasksGatewayRepository, type TasksGatewayRepository } from './tasks.gateway.repository.js'
 import { tasksLocalRepository, type TasksLocalRepository } from './tasks.local.repository.js'
 
-type Logger = Pick<Console, 'error' | 'warn' | 'info'>
+type TasksLogger = Pick<Logger, 'error' | 'warn' | 'info'>
 
 export type TasksService = {
   loadDashboard: (agentId?: string) => Promise<TasksDashboardResponse>
@@ -36,7 +37,7 @@ export type TasksService = {
 export type TasksServiceDeps = {
   localRepository: TasksLocalRepository
   gatewayRepository: TasksGatewayRepository
-  logger: Logger
+  logger: TasksLogger
 }
 
 function nowIso(): string {
@@ -403,10 +404,10 @@ async function executeTask(params: {
     const endedAt = Date.now()
     const message = error instanceof Error ? error.message : String(error)
 
-    params.deps.logger.error('Task execution failed', {
+    params.deps.logger.error({
       taskId: task.id,
       error,
-    })
+    }, 'Task execution failed')
 
     await params.deps.localRepository.updateRun(run.id, {
       status: 'failed',
@@ -433,5 +434,5 @@ async function executeTask(params: {
 export const tasksService = createTasksService({
   localRepository: tasksLocalRepository,
   gatewayRepository: tasksGatewayRepository,
-  logger: console,
+  logger: logger.child({ module: 'tasks' }),
 })

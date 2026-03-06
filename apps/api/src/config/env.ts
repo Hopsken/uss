@@ -1,3 +1,7 @@
+import { logger } from "../infra/logging/logger.js";
+
+const envLogger = logger.child({ component: "env" });
+
 export type ApiEnv = {
   port: number;
   gatewayUrl: string;
@@ -39,7 +43,7 @@ function resolveAuthSecret(): string {
     throw new Error("BETTER_AUTH_SECRET is required in production");
   }
 
-  console.warn("[api] BETTER_AUTH_SECRET is not set, using local development fallback");
+  envLogger.warn("Using development fallback for BETTER_AUTH_SECRET");
   return "uss-dev-only-better-auth-secret-change-me";
 }
 

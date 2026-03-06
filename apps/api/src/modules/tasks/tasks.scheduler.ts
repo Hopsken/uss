@@ -1,7 +1,9 @@
 import { tasksService, type TasksService } from './tasks.service.js'
+import { logger } from '../../infra/logging/logger.js'
 
 let timer: ReturnType<typeof setInterval> | null = null
 let running = false
+const schedulerLogger = logger.child({ module: 'tasks-scheduler' })
 
 export function startTasksScheduler(service: TasksService = tasksService): void {
   if (timer) return
@@ -12,7 +14,7 @@ export function startTasksScheduler(service: TasksService = tasksService): void 
     try {
       await service.runDueTasks()
     } catch (error) {
-      console.error('Tasks scheduler tick failed', error)
+      schedulerLogger.error({ error }, 'tasks_scheduler.tick_failed')
     } finally {
       running = false
     }

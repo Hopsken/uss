@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import pino from "pino";
 import type { UsageResponse } from "@uss/shared";
 import { createUsageService } from "./usage.service.js";
 
@@ -17,10 +18,7 @@ const payload: UsageResponse = {
   modelBreakdown: [],
 };
 
-const silentLogger = {
-  error: () => {},
-  warn: () => {},
-};
+const silentLogger = pino({ enabled: false });
 
 test("usage service returns fresh cache hit", async () => {
   let fetchCalls = 0;

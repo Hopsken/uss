@@ -3,6 +3,7 @@ import { cors } from "@elysiajs/cors";
 import { node } from "@elysiajs/node";
 import { resolveApiEnv } from "./config/env.js";
 import { errorHandlerPlugin } from "./plugins/error-handler.js";
+import { requestLoggerPlugin } from "./plugins/request-logger.js";
 import { v1Plugin } from "./plugins/v1.js";
 
 export function buildApp() {
@@ -17,6 +18,7 @@ export function buildApp() {
         allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
       }),
     )
+    .use(requestLoggerPlugin)
     .use(errorHandlerPlugin)
     .use(v1Plugin);
 }

@@ -1,13 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import pino from "pino";
 import { createBridgeService } from "./bridge.service.js";
 import type { BridgeRawPayload } from "./bridge.model.js";
 import type { BridgeResponse } from "@uss/shared";
 
-const silentLogger = {
-  error: () => {},
-  warn: () => {},
-};
+const silentLogger = pino({ enabled: false });
 
 const rawPayload: BridgeRawPayload = {
   hello: { server: { version: "1.0.0" }, snapshot: { uptimeMs: 1000 } },

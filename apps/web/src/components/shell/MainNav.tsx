@@ -18,10 +18,11 @@ import {
   Activity,
   BarChart3,
   Bot,
+  CalendarDays,
   LayoutDashboard,
-  ListTodo,
   Puzzle,
   Radio,
+  RefreshCcw,
   Settings,
 } from 'lucide-react'
 import type { NavItem } from './types'
@@ -29,7 +30,8 @@ import type { NavItem } from './types'
 const ICON_MAP = {
   bridge: LayoutDashboard,
   agents: Bot,
-  tasks: ListTodo,
+  automation: RefreshCcw,
+  agenda: CalendarDays,
   activity: Activity,
   usage: BarChart3,
   skills: Puzzle,

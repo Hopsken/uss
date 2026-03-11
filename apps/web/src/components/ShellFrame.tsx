@@ -7,7 +7,8 @@ import { AppShell } from '@/components/shell'
 const NAV_ITEMS = [
   { label: 'Bridge', href: '/bridge' },
   { label: 'Agents', href: '/agents' },
-  { label: 'Tasks', href: '/tasks' },
+  { label: 'Automation', href: '/automation' },
+  { label: 'Agenda', href: '/agenda' },
   { label: 'Activity', href: '/activity' },
   { label: 'Usage', href: '/usage' },
   { label: 'Skills', href: '/skills' },
@@ -21,7 +22,7 @@ export function ShellFrame({ children }: { children: ReactNode }) {
 
   const items = NAV_ITEMS.map((item) => ({
     ...item,
-    isActive: item.href === '/agents' ? pathname.startsWith('/agents') : pathname === item.href,
+    isActive: pathname === item.href || pathname.startsWith(`${item.href}/`),
   }))
 
   if (isAuthRoute) {

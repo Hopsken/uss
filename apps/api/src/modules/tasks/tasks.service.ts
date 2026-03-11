@@ -216,7 +216,10 @@ export function createTasksService(deps: TasksServiceDeps): TasksService {
       const task = await deps.localRepository.getTaskById(taskId)
       if (!task) return null
 
-      if (body.status !== 'pending' && body.status !== 'cancelled') {
+      const allowedStatuses: TaskStatus[] =
+        task.schedule.type === 'one_time' ? ['pending', 'done', 'cancelled'] : ['pending', 'cancelled']
+
+      if (!allowedStatuses.includes(body.status)) {
         throw new Error('unsupported_status_transition')
       }
 
@@ -228,6 +231,9 @@ export function createTasksService(deps: TasksServiceDeps): TasksService {
       await deps.localRepository.updateTask(taskId, {
         status: body.status,
         cancelledAt: body.status === 'cancelled' ? Date.now() : null,
+        lastRunAtUtc: body.status === 'done' ? Date.now() : undefined,
+        lastRunStatus: body.status === 'done' ? 'success' : body.status === 'pending' ? 'never' : undefined,
+        lastRunError: body.status === 'pending' || body.status === 'done' ? null : undefined,
         nextRunAtUtc,
       })
 

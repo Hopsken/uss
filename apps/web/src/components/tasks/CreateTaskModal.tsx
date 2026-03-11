@@ -13,6 +13,8 @@ const PRESETS: Array<{ value: SchedulePreset; label: string }> = [
 interface CreateTaskModalProps {
   agents: AgentRef[]
   templates: TaskTemplate[]
+  defaultTaskType?: 'one_time' | 'recurring'
+  title?: string
   onClose?: () => void
   onSubmit?: (
     task: Omit<
@@ -23,6 +25,7 @@ interface CreateTaskModalProps {
       | 'changelog'
       | 'executionLog'
       | 'completedAt'
+      | 'nextRunAt'
       | 'lastRunStatus'
       | 'lastRunAt'
       | 'lastRunError'
@@ -30,11 +33,18 @@ interface CreateTaskModalProps {
   ) => void
 }
 
-export function CreateTaskModal({ agents, templates, onClose, onSubmit }: CreateTaskModalProps) {
+export function CreateTaskModal({
+  agents,
+  templates,
+  defaultTaskType = 'one_time',
+  title: modalTitle = 'New Task',
+  onClose,
+  onSubmit,
+}: CreateTaskModalProps) {
   const [title, setTitle] = useState('')
   const [instructions, setInstructions] = useState('')
   const [selectedAgentId, setSelectedAgentId] = useState(agents[0]?.id ?? '')
-  const [scheduleType, setScheduleType] = useState<'one_time' | 'recurring'>('one_time')
+  const [scheduleType, setScheduleType] = useState<'one_time' | 'recurring'>(defaultTaskType)
   const [scheduledAt, setScheduledAt] = useState('')
   const [preset, setPreset] = useState<SchedulePreset>('daily')
   const [cron, setCron] = useState('')
@@ -123,7 +133,7 @@ export function CreateTaskModal({ agents, templates, onClose, onSubmit }: Create
               Back to form
             </button>
           ) : (
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">New Task</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">{modalTitle}</h2>
           )}
           <div className="flex items-center gap-3">
             {!showTemplates && (

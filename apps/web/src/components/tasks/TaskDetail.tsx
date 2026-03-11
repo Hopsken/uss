@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Calendar, Clock, CheckCircle2, ChevronDown, Copy, ChevronRight, Trash2, Archive, Play } from 'lucide-react'
 import type { Task, AgentRef, TaskStatus, ChangelogEntryType } from './types'
+import { agendaBucketLabels, agendaStateLabels, automationLabels, formatShortDate } from './presentation'
 
 const STATUS_CONFIG: Record<TaskStatus, { label: string; dot: string; color: string; bg: string; border: string }> = {
   pending: { label: 'Pending', dot: 'bg-amber-400', color: 'text-amber-700 dark:text-amber-300', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800' },
@@ -53,7 +54,8 @@ export function TaskDetail({ task, agents, onDelete, onRunNow, onChangeStatus, o
   const [copied, setCopied] = useState(false)
 
   const statusCfg = STATUS_CONFIG[task.status]
-  const allStatuses: TaskStatus[] = ['pending', 'running', 'done', 'failed', 'cancelled']
+  const allStatuses: TaskStatus[] =
+    task.schedule.type === 'one_time' ? ['pending', 'done', 'cancelled'] : ['pending', 'cancelled']
   const canRunNow = task.status === 'pending' || task.status === 'failed'
 
   function handleCopy() {
@@ -146,7 +148,24 @@ export function TaskDetail({ task, agents, onDelete, onRunNow, onChangeStatus, o
     <div className="flex-1 min-w-0 overflow-y-auto bg-slate-50 dark:bg-slate-950/30">
       <div className={`${mobile ? 'px-4 py-5' : 'max-w-2xl mx-auto px-8 py-6'}`}>
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50 leading-tight mb-1">{task.title}</h1>
-        <p className="text-sm text-slate-400 dark:text-slate-500 font-mono mb-4">{task.schedule.humanReadable}</p>
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <p className="text-sm text-slate-400 dark:text-slate-500 font-mono">{task.schedule.humanReadable}</p>
+          {task.schedule.type === 'recurring' && task.automationStatus ? (
+            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">
+              {automationLabels[task.automationStatus]}
+            </span>
+          ) : null}
+          {task.schedule.type === 'one_time' && task.agendaState ? (
+            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">
+              {agendaStateLabels[task.agendaState]}
+            </span>
+          ) : null}
+          {task.schedule.type === 'one_time' && task.agendaBucket ? (
+            <span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
+              {agendaBucketLabels[task.agendaBucket]}
+            </span>
+          ) : null}
+        </div>
 
         {mobile && (
           <div className="flex flex-wrap items-center gap-2 mb-5">
@@ -288,10 +307,23 @@ export function TaskDetail({ task, agents, onDelete, onRunNow, onChangeStatus, o
             <div className="flex items-start gap-2.5">
               <Calendar className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-0.5">Scheduled For</p>
+                <p className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-0.5">
+                  {task.schedule.type === 'recurring' ? 'Cadence' : 'Scheduled For'}
+                </p>
                 <p className="text-xs text-slate-700 dark:text-slate-300 font-mono leading-snug">{task.schedule.humanReadable}</p>
               </div>
             </div>
+            {task.nextRunAt && (
+              <div className="flex items-start gap-2.5">
+                <Play className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-0.5">
+                    {task.schedule.type === 'recurring' ? 'Next run' : 'Due'}
+                  </p>
+                  <p className="text-xs text-slate-700 dark:text-slate-300">{formatShortDate(task.nextRunAt)}</p>
+                </div>
+              </div>
+            )}
             <div className="flex items-start gap-2.5">
               <Clock className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
               <div>

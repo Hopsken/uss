@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+import { AgendaClient } from '@/components/tasks/AgendaClient'
 
 type PageProps = {
   searchParams?: Promise<{
@@ -6,14 +6,10 @@ type PageProps = {
   }>
 }
 
-export default async function TasksPage({ searchParams }: PageProps) {
+export default async function AgendaPage({ searchParams }: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {}
   const agentIdRaw = resolvedSearchParams.agentId
   const initialAgentFilter = typeof agentIdRaw === 'string' ? agentIdRaw : null
 
-  if (initialAgentFilter) {
-    redirect(`/automation?agentId=${encodeURIComponent(initialAgentFilter)}`)
-  }
-
-  redirect('/automation')
+  return <AgendaClient initialAgentFilter={initialAgentFilter} />
 }

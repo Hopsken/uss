@@ -321,7 +321,10 @@ export type AssignSkillResponse = {
 
 export type TaskStatus = 'pending' | 'running' | 'done' | 'failed' | 'cancelled'
 export type TaskLastRunStatus = 'never' | 'success' | 'failed' | 'timeout' | 'running'
-export type KanbanView = 'by_agent' | 'by_status'
+export type AutomationStatus = 'running' | 'attention' | 'due_soon' | 'healthy' | 'paused'
+export type AgendaBucket = 'overdue' | 'today' | 'upcoming' | 'completed' | 'cancelled'
+export type AgendaState = 'queued' | 'in_progress' | 'blocked' | 'done' | 'cancelled'
+export type AutomationView = 'by_status' | 'by_agent'
 export type SchedulePreset = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom'
 export type ChangelogEntryType =
   | 'task_created'
@@ -358,12 +361,16 @@ export type Task = {
   createdAt: string
   updatedAt: string
   completedAt: string | null
+  nextRunAt: string | null
   templateId: string | null
   changelog: ChangelogEntry[]
   executionLog: string | null
   lastRunStatus: TaskLastRunStatus
   lastRunAt: string | null
   lastRunError: string | null
+  automationStatus?: AutomationStatus
+  agendaBucket?: AgendaBucket
+  agendaState?: AgendaState
 }
 
 export type TaskRun = {

@@ -58,12 +58,40 @@ export const taskSchema = t.Object({
   createdAt: t.String(),
   updatedAt: t.String(),
   completedAt: t.Nullable(t.String()),
+  nextRunAt: t.Nullable(t.String()),
   templateId: t.Nullable(t.String()),
   changelog: t.Array(changelogEntrySchema),
   executionLog: t.Nullable(t.String()),
   lastRunStatus: taskLastRunStatusSchema,
   lastRunAt: t.Nullable(t.String()),
   lastRunError: t.Nullable(t.String()),
+  automationStatus: t.Optional(
+    t.Union([
+      t.Literal('running'),
+      t.Literal('attention'),
+      t.Literal('due_soon'),
+      t.Literal('healthy'),
+      t.Literal('paused'),
+    ]),
+  ),
+  agendaBucket: t.Optional(
+    t.Union([
+      t.Literal('overdue'),
+      t.Literal('today'),
+      t.Literal('upcoming'),
+      t.Literal('completed'),
+      t.Literal('cancelled'),
+    ]),
+  ),
+  agendaState: t.Optional(
+    t.Union([
+      t.Literal('queued'),
+      t.Literal('in_progress'),
+      t.Literal('blocked'),
+      t.Literal('done'),
+      t.Literal('cancelled'),
+    ]),
+  ),
 })
 
 export const agentRefSchema = t.Object({

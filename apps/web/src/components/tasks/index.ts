@@ -1,6 +1,5 @@
-export { Tasks } from './Tasks'
-export { TasksClient } from './TasksClient'
-export { TaskBoard } from './TaskBoard'
+export { AutomationClient } from './AutomationClient'
+export { AgendaClient } from './AgendaClient'
 export { TaskCard } from './TaskCard'
 export { TaskDetail } from './TaskDetail'
 export { CreateTaskModal } from './CreateTaskModal'

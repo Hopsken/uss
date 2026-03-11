@@ -11,6 +11,11 @@
       "sourceType": "github",
       "computedHash": "55268e69a2c766ed67e56a0db57544f60cc52dba0c7f024a974baf965e525e1b"
     },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+    },
     "full-output-enforcement": {
       "source": "leonxlnx/taste-skill",
       "sourceType": "github",

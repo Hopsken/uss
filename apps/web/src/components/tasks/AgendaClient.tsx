@@ -2,9 +2,10 @@
 
 import { Alert, Box, Button, Center, Loader, Stack, Text } from '@mantine/core'
 import { usePathname, useRouter } from 'next/navigation'
-import { ChevronDown, Plus } from 'lucide-react'
+import { Archive, ChevronDown, Plus } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
+import { ArchivedTasksPanel } from './ArchivedTasksPanel'
 import { CreateTaskModal } from './CreateTaskModal'
 import { TaskDetail } from './TaskDetail'
 import {
@@ -101,14 +102,22 @@ export function AgendaClient({ initialAgentFilter }: { initialAgentFilter: strin
   const router = useRouter()
   const pathname = usePathname()
   const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [archivedOpen, setArchivedOpen] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [showFinished, setShowFinished] = useState(false)
   const [search, setSearch] = useState('')
   const state = useTasksDashboard(initialAgentFilter)
+  const archivedAgendaTasks = useMemo(
+    () => state.archivedTasks.filter((task) => task.schedule.type === 'one_time'),
+    [state.archivedTasks],
+  )
 
   const selectedTask = useMemo(
-    () => state.agendaTasks.find((task) => task.id === state.selectedTaskId) ?? null,
-    [state.agendaTasks, state.selectedTaskId],
+    () =>
+      state.agendaTasks.find((task) => task.id === state.selectedTaskId) ??
+      archivedAgendaTasks.find((task) => task.id === state.selectedTaskId) ??
+      null,
+    [archivedAgendaTasks, state.agendaTasks, state.selectedTaskId],
   )
 
   const filteredTasks = useMemo(() => state.agendaTasks.filter((task) => matchesSearch(task, search)), [search, state.agendaTasks])
@@ -170,6 +179,13 @@ export function AgendaClient({ initialAgentFilter }: { initialAgentFilter: strin
               secondary={
                 <div className="flex flex-wrap items-center gap-2">
                   <button
+                    onClick={() => setArchivedOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 transition hover:border-violet-300 hover:bg-violet-100"
+                  >
+                    <Archive className="h-4 w-4" />
+                    Archived
+                  </button>
+                  <button
                     onClick={() => setQuickAddOpen(true)}
                     className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-950"
                   >
@@ -201,6 +217,28 @@ export function AgendaClient({ initialAgentFilter }: { initialAgentFilter: strin
       </Stack>
 
       <UtilityPanel
+        open={archivedOpen}
+        title="Archived agenda items"
+        description="Completed or cancelled work you tucked away. Restore it to put it back in play."
+        size="wide"
+        onClose={() => setArchivedOpen(false)}
+      >
+        <ArchivedTasksPanel
+          tasks={archivedAgendaTasks}
+          busy={state.busy}
+          onSelectTask={(taskId) => {
+            state.setSelectedTaskId(taskId)
+            setArchivedOpen(false)
+          }}
+          onRestoreTask={(taskId) => {
+            state.restoreTask(taskId)
+            setArchivedOpen(false)
+          }}
+          onDeleteTask={state.deleteTask}
+        />
+      </UtilityPanel>
+
+      <UtilityPanel
         open={quickAddOpen}
         title="Quick add"
         description="Fast path for one-time work. Use the full modal only when the task needs more structure."
@@ -223,6 +261,8 @@ export function AgendaClient({ initialAgentFilter }: { initialAgentFilter: strin
             task={selectedTask}
             agents={state.agents}
             onDelete={state.deleteTask}
+            onArchive={state.archiveTask}
+            onRestore={state.restoreTask}
             onRunNow={state.runTaskNow}
             onChangeStatus={state.changeStatus}
             onReassignTask={state.reassignTask}

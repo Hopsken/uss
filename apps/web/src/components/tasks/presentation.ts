@@ -6,6 +6,7 @@ export const statusLabels: Record<TaskStatus, string> = {
   done: 'Done',
   failed: 'Failed',
   cancelled: 'Cancelled',
+  archived: 'Archived',
 }
 
 export const automationTone: Record<AutomationStatus, string> = {

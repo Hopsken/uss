@@ -7,6 +7,7 @@ const STATUS_DOT: Record<TaskStatus, string> = {
   done: 'bg-emerald-400',
   failed: 'bg-red-400',
   cancelled: 'bg-slate-400',
+  archived: 'bg-violet-400',
 }
 
 interface TaskCardProps {

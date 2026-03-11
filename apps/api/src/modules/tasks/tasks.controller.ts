@@ -1,4 +1,5 @@
 import type {
+  ArchivedTasksResponse,
   CreateTaskRequest,
   CreateTaskTemplateRequest,
   TaskReassignRequest,
@@ -12,6 +13,8 @@ import { tasksService } from './tasks.service.js'
 export const tasksController = {
   getDashboard: async (agentId?: string): Promise<TasksDashboardResponse> =>
     await tasksService.loadDashboard(agentId),
+  getArchivedTasks: async (agentId?: string): Promise<ArchivedTasksResponse> =>
+    await tasksService.loadArchivedTasks(agentId),
   postTask: async (body: CreateTaskRequest) => await tasksService.createTask(body),
   patchTask: async (taskId: string, body: UpdateTaskRequest) => await tasksService.updateTask(taskId, body),
   deleteTask: async (taskId: string) => await tasksService.deleteTask(taskId),

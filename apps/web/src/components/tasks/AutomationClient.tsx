@@ -2,8 +2,9 @@
 
 import { Alert, Box, Button, Center, Loader, Stack, Text } from '@mantine/core'
 import { usePathname, useRouter } from 'next/navigation'
-import { Plus } from 'lucide-react'
+import { Archive, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { ArchivedTasksPanel } from './ArchivedTasksPanel'
 import { CreateTaskModal } from './CreateTaskModal'
 import { TaskDetail } from './TaskDetail'
 import {
@@ -50,17 +51,25 @@ export function AutomationClient({ initialAgentFilter }: { initialAgentFilter: s
   const pathname = usePathname()
   const [automationView, setAutomationView] = useState<AutomationView>('by_status')
   const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [archivedOpen, setArchivedOpen] = useState(false)
   const [templatesOpen, setTemplatesOpen] = useState(false)
   const [search, setSearch] = useState('')
   const state = useTasksDashboard(initialAgentFilter)
+  const archivedRecurringTasks = useMemo(
+    () => state.archivedTasks.filter((task) => task.schedule.type === 'recurring'),
+    [state.archivedTasks],
+  )
 
   useEffect(() => {
     setAutomationView(readStoredView())
   }, [])
 
   const selectedTask = useMemo(
-    () => state.recurringTasks.find((task) => task.id === state.selectedTaskId) ?? null,
-    [state.recurringTasks, state.selectedTaskId],
+    () =>
+      state.recurringTasks.find((task) => task.id === state.selectedTaskId) ??
+      archivedRecurringTasks.find((task) => task.id === state.selectedTaskId) ??
+      null,
+    [archivedRecurringTasks, state.recurringTasks, state.selectedTaskId],
   )
 
   const filteredTasks = useMemo(
@@ -143,6 +152,13 @@ export function AutomationClient({ initialAgentFilter }: { initialAgentFilter: s
                     ))}
                   </div>
                   <button
+                    onClick={() => setArchivedOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 transition hover:border-violet-300 hover:bg-violet-100"
+                  >
+                    <Archive className="h-4 w-4" />
+                    Archived
+                  </button>
+                  <button
                     onClick={() => setTemplatesOpen(true)}
                     className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-950"
                   >
@@ -171,6 +187,28 @@ export function AutomationClient({ initialAgentFilter }: { initialAgentFilter: s
       </Stack>
 
       <UtilityPanel
+        open={archivedOpen}
+        title="Archived automations"
+        description="Paused work parked off-board. Restore when it should resume, delete when it should disappear."
+        size="wide"
+        onClose={() => setArchivedOpen(false)}
+      >
+        <ArchivedTasksPanel
+          tasks={archivedRecurringTasks}
+          busy={state.busy}
+          onSelectTask={(taskId) => {
+            state.setSelectedTaskId(taskId)
+            setArchivedOpen(false)
+          }}
+          onRestoreTask={(taskId) => {
+            state.restoreTask(taskId)
+            setArchivedOpen(false)
+          }}
+          onDeleteTask={state.deleteTask}
+        />
+      </UtilityPanel>
+
+      <UtilityPanel
         open={templatesOpen}
         title="Automation templates"
         description="Reusable task patterns stay nearby, but off the main board."
@@ -192,6 +230,8 @@ export function AutomationClient({ initialAgentFilter }: { initialAgentFilter: s
             task={selectedTask}
             agents={state.agents}
             onDelete={state.deleteTask}
+            onArchive={state.archiveTask}
+            onRestore={state.restoreTask}
             onRunNow={state.runTaskNow}
             onChangeStatus={state.changeStatus}
             onReassignTask={state.reassignTask}

@@ -1,6 +1,7 @@
 import { Elysia, t } from 'elysia'
 import { tasksController } from './tasks.controller.js'
 import {
+  archivedTasksResponseSchema,
   badRequestSchema,
   createTaskBodySchema,
   mutationResponseSchema,
@@ -24,6 +25,16 @@ export function createTasksRoutes(controller = tasksController) {
           agentId: t.Optional(t.String()),
         }),
         response: tasksDashboardResponseSchema,
+      },
+    )
+    .get(
+      '/tasks/archived',
+      async ({ query }) => controller.getArchivedTasks(query.agentId),
+      {
+        query: t.Object({
+          agentId: t.Optional(t.String()),
+        }),
+        response: archivedTasksResponseSchema,
       },
     )
     .post('/tasks', async ({ body }) => controller.postTask(body), {
@@ -54,12 +65,21 @@ export function createTasksRoutes(controller = tasksController) {
     .delete(
       '/tasks/:taskId',
       async ({ params, set }) => {
-        const result = await controller.deleteTask(params.taskId)
-        if (!result) {
-          set.status = 404
-          return { error: 'not_found' }
+        try {
+          const result = await controller.deleteTask(params.taskId)
+          if (!result) {
+            set.status = 404
+            return { error: 'not_found' }
+          }
+          return result
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'bad_request'
+          if (message === 'task_running') {
+            set.status = 400
+            return { error: message }
+          }
+          throw error
         }
-        return result
       },
       {
         params: t.Object({
@@ -67,6 +87,7 @@ export function createTasksRoutes(controller = tasksController) {
         }),
         response: {
           200: mutationResponseSchema,
+          400: badRequestSchema,
           404: notFoundSchema,
         },
       },

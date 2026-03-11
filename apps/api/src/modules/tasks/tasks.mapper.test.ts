@@ -112,3 +112,25 @@ test('mapTask derives overdue agenda bucket for pending one-time task in the pas
   assert.equal(mapped.agendaBucket, 'overdue')
   assert.equal(mapped.agendaState, 'queued')
 })
+
+test('mapTask suppresses board-derived labels for archived tasks', () => {
+  const task = makeTask({
+    status: 'archived',
+    schedule: {
+      type: 'one_time',
+      scheduledAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      humanReadable: 'Soon',
+    },
+  })
+
+  const mapped = mapTask({
+    task,
+    agentById,
+    changelog: [],
+    latestRun: null,
+  })
+
+  assert.equal(mapped.agendaBucket, undefined)
+  assert.equal(mapped.agendaState, undefined)
+  assert.equal(mapped.automationStatus, undefined)
+})

@@ -319,7 +319,7 @@ export type AssignSkillResponse = {
   syncedAt: string
 }
 
-export type TaskStatus = 'pending' | 'running' | 'done' | 'failed' | 'cancelled'
+export type TaskStatus = 'pending' | 'running' | 'done' | 'failed' | 'cancelled' | 'archived'
 export type TaskLastRunStatus = 'never' | 'success' | 'failed' | 'timeout' | 'running'
 export type AutomationStatus = 'running' | 'attention' | 'due_soon' | 'healthy' | 'paused'
 export type AgendaBucket = 'overdue' | 'today' | 'upcoming' | 'completed' | 'cancelled'
@@ -402,6 +402,11 @@ export type TasksDashboardResponse = {
   tasks: Task[]
   templates: TaskTemplate[]
   agents: AgentRef[]
+  syncedAt: string
+}
+
+export type ArchivedTasksResponse = {
+  tasks: Task[]
   syncedAt: string
 }
 

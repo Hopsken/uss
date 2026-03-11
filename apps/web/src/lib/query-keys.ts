@@ -17,6 +17,7 @@ export const queryKeys = {
   },
   tasks: {
     dashboard: (agentId?: string) => ['tasks', 'dashboard', agentId ?? 'all'] as const,
+    archived: (agentId?: string) => ['tasks', 'archived', agentId ?? 'all'] as const,
     runs: (taskId: string) => ['tasks', 'runs', taskId] as const,
   },
   skills: {

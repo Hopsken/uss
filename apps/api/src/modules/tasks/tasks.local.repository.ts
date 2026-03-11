@@ -42,6 +42,7 @@ export type LocalTaskRunRecord = {
 export type TasksLocalRepository = {
   ensureTables: () => Promise<void>
   listTasks: (agentId?: string) => Promise<LocalTaskRecord[]>
+  listArchivedTasks: (agentId?: string) => Promise<LocalTaskRecord[]>
   getTaskById: (taskId: string) => Promise<LocalTaskRecord | null>
   createTask: (params: {
     title: string
@@ -53,6 +54,7 @@ export type TasksLocalRepository = {
     nextRunAtUtc: number | null
   }) => Promise<LocalTaskRecord>
   updateTask: (taskId: string, changes: Partial<Pick<LocalTaskRecord, 'title' | 'instructionsBase' | 'agentId' | 'status' | 'schedule' | 'templateId' | 'nextRunAtUtc' | 'lastRunAtUtc' | 'lastRunStatus' | 'lastRunError' | 'lockOwner' | 'lockUntilUtc' | 'cancelledAt'>>) => Promise<LocalTaskRecord | null>
+  deleteTask: (taskId: string) => Promise<boolean>
   listDueTaskIds: (nowMs: number, limit: number) => Promise<string[]>
   tryClaimTask: (taskId: string, owner: string, lockUntilUtc: number, nowMs: number) => Promise<boolean>
   createRun: (params: {
@@ -216,7 +218,18 @@ export const tasksLocalRepository: TasksLocalRepository = {
 
   async listTasks(agentId) {
     await ensureTables()
-    const where = agentId ? eq(schema.tasks.agentId, agentId) : undefined
+    const where = agentId
+      ? and(eq(schema.tasks.agentId, agentId), sql`${schema.tasks.status} <> 'archived'`)
+      : sql`${schema.tasks.status} <> 'archived'`
+    const rows = await db.select().from(schema.tasks).where(where).orderBy(desc(schema.tasks.updatedAt))
+    return rows.map(toTaskRecord)
+  },
+
+  async listArchivedTasks(agentId) {
+    await ensureTables()
+    const where = agentId
+      ? and(eq(schema.tasks.agentId, agentId), eq(schema.tasks.status, 'archived'))
+      : eq(schema.tasks.status, 'archived')
     const rows = await db.select().from(schema.tasks).where(where).orderBy(desc(schema.tasks.updatedAt))
     return rows.map(toTaskRecord)
   },
@@ -276,6 +289,14 @@ export const tasksLocalRepository: TasksLocalRepository = {
 
     await db.update(schema.tasks).set(values).where(eq(schema.tasks.id, taskId))
     return await this.getTaskById(taskId)
+  },
+
+  async deleteTask(taskId) {
+    await ensureTables()
+    await db.delete(schema.taskRuns).where(eq(schema.taskRuns.taskId, taskId))
+    await db.delete(schema.taskChangelog).where(eq(schema.taskChangelog.taskId, taskId))
+    const result = await db.delete(schema.tasks).where(eq(schema.tasks.id, taskId))
+    return Number(result.rowsAffected ?? 0) > 0
   },
 
   async listDueTaskIds(nowMs, limit) {

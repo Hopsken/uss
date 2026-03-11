@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type {
+  ArchivedTasksResponse,
   AgentRef,
   CreateTaskRequest,
   CreateTaskTemplateRequest,
@@ -21,6 +22,7 @@ type TasksLogger = Pick<Logger, 'error' | 'warn' | 'info'>
 
 export type TasksService = {
   loadDashboard: (agentId?: string) => Promise<TasksDashboardResponse>
+  loadArchivedTasks: (agentId?: string) => Promise<ArchivedTasksResponse>
   createTask: (body: CreateTaskRequest) => Promise<TaskMutationResponse>
   updateTask: (taskId: string, body: UpdateTaskRequest) => Promise<TaskMutationResponse | null>
   deleteTask: (taskId: string) => Promise<TaskMutationResponse | null>
@@ -113,6 +115,45 @@ export function createTasksService(deps: TasksServiceDeps): TasksService {
       }
     },
 
+    async loadArchivedTasks(agentId): Promise<ArchivedTasksResponse> {
+      await deps.localRepository.ensureTables()
+
+      const tasks = await deps.localRepository.listArchivedTasks(agentId)
+
+      let agentMap = new Map<string, AgentRef>()
+      try {
+        agentMap = await loadAgentsMap(deps.gatewayRepository)
+      } catch {
+        for (const task of tasks) {
+          if (!agentMap.has(task.agentId)) {
+            agentMap.set(task.agentId, {
+              id: task.agentId,
+              name: task.agentId,
+              role: 'Agent',
+            })
+          }
+        }
+      }
+
+      const taskIds = tasks.map((task) => task.id)
+      const [changelogByTask, latestRuns] = await Promise.all([
+        deps.localRepository.listChangelogByTaskIds(taskIds),
+        deps.localRepository.getLatestRunsByTaskIds(taskIds),
+      ])
+
+      return {
+        tasks: tasks.map((task) =>
+          mapTask({
+            task,
+            agentById: agentMap,
+            changelog: mapChangelog(changelogByTask.get(task.id) ?? []),
+            latestRun: latestRuns.get(task.id) ?? null,
+          }),
+        ),
+        syncedAt: nowIso(),
+      }
+    },
+
     async createTask(body) {
       await deps.localRepository.ensureTables()
       await ensureAgentExists(deps.gatewayRepository, body.agentId)
@@ -181,22 +222,11 @@ export function createTasksService(deps: TasksServiceDeps): TasksService {
       await deps.localRepository.ensureTables()
       const current = await deps.localRepository.getTaskById(taskId)
       if (!current) return null
+      if (current.status === 'running') {
+        throw new Error('task_running')
+      }
 
-      await deps.localRepository.updateTask(taskId, {
-        status: 'cancelled',
-        cancelledAt: Date.now(),
-        nextRunAtUtc: null,
-        lockOwner: null,
-        lockUntilUtc: null,
-      })
-
-      await deps.localRepository.insertChangelog({
-        taskId,
-        type: 'status_changed',
-        message: 'Status changed',
-        detail: 'Cancelled by user',
-        occurredAtUtc: Date.now(),
-      })
+      await deps.localRepository.deleteTask(taskId)
 
       return toMutation(taskId)
     },
@@ -217,7 +247,25 @@ export function createTasksService(deps: TasksServiceDeps): TasksService {
       if (!task) return null
 
       const allowedStatuses: TaskStatus[] =
-        task.schedule.type === 'one_time' ? ['pending', 'done', 'cancelled'] : ['pending', 'cancelled']
+        task.schedule.type === 'one_time'
+          ? ['pending', 'done', 'cancelled', 'archived']
+          : ['pending', 'cancelled', 'archived']
+
+      if (task.status === 'running' && body.status === 'archived') {
+        throw new Error('unsupported_status_transition')
+      }
+
+      if (task.status === 'archived' && body.status !== 'pending') {
+        throw new Error('unsupported_status_transition')
+      }
+
+      if (task.status !== 'archived' && body.status === 'pending' && task.status !== 'pending') {
+        if (!(task.schedule.type === 'one_time' && ['done', 'cancelled', 'failed'].includes(task.status))) {
+          if (!(task.schedule.type === 'recurring' && ['cancelled', 'failed'].includes(task.status))) {
+            throw new Error('unsupported_status_transition')
+          }
+        }
+      }
 
       if (!allowedStatuses.includes(body.status)) {
         throw new Error('unsupported_status_transition')
@@ -235,13 +283,22 @@ export function createTasksService(deps: TasksServiceDeps): TasksService {
         lastRunStatus: body.status === 'done' ? 'success' : body.status === 'pending' ? 'never' : undefined,
         lastRunError: body.status === 'pending' || body.status === 'done' ? null : undefined,
         nextRunAtUtc,
+        lockOwner: body.status === 'archived' ? null : undefined,
+        lockUntilUtc: body.status === 'archived' ? null : undefined,
       })
+
+      const detail =
+        body.status === 'archived'
+          ? 'Archived by user'
+          : task.status === 'archived' && body.status === 'pending'
+            ? 'Restored from archive'
+            : `Changed to ${body.status}`
 
       await deps.localRepository.insertChangelog({
         taskId,
         type: 'status_changed',
         message: 'Status changed',
-        detail: `Changed to ${body.status}`,
+        detail,
         occurredAtUtc: Date.now(),
       })
 

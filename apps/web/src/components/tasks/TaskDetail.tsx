@@ -9,6 +9,7 @@ const STATUS_CONFIG: Record<TaskStatus, { label: string; dot: string; color: str
   done: { label: 'Done', dot: 'bg-emerald-400', color: 'text-emerald-700 dark:text-emerald-300', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800' },
   failed: { label: 'Failed', dot: 'bg-red-400', color: 'text-red-700 dark:text-red-300', bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-200 dark:border-red-800' },
   cancelled: { label: 'Cancelled', dot: 'bg-slate-400', color: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700' },
+  archived: { label: 'Archived', dot: 'bg-violet-400', color: 'text-violet-700 dark:text-violet-300', bg: 'bg-violet-50 dark:bg-violet-900/20', border: 'border-violet-200 dark:border-violet-800' },
 }
 
 const CHANGELOG_DOT: Record<ChangelogEntryType, string> = {
@@ -42,21 +43,30 @@ interface TaskDetailProps {
   agents: AgentRef[]
   onBack?: () => void
   onDelete?: (taskId: string) => void
+  onArchive?: (taskId: string) => void
+  onRestore?: (taskId: string) => void
   onRunNow?: (taskId: string) => void
   onChangeStatus?: (taskId: string, status: TaskStatus) => void
   onReassignTask?: (taskId: string, agentId: string) => void
 }
 
-export function TaskDetail({ task, agents, onDelete, onRunNow, onChangeStatus, onReassignTask }: TaskDetailProps) {
+export function TaskDetail({ task, agents, onDelete, onArchive, onRestore, onRunNow, onChangeStatus, onReassignTask }: TaskDetailProps) {
   const [statusOpen, setStatusOpen] = useState(false)
   const [assignOpen, setAssignOpen] = useState(false)
   const [logsExpanded, setLogsExpanded] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const statusCfg = STATUS_CONFIG[task.status]
-  const allStatuses: TaskStatus[] =
-    task.schedule.type === 'one_time' ? ['pending', 'done', 'cancelled'] : ['pending', 'cancelled']
+  const isRunning = task.status === 'running'
+  const isArchived = task.status === 'archived'
+  const allStatuses: TaskStatus[] = isArchived
+    ? ['pending']
+    : task.schedule.type === 'one_time'
+      ? ['pending', 'done', 'cancelled']
+      : ['pending', 'cancelled']
   const canRunNow = task.status === 'pending' || task.status === 'failed'
+  const archiveLabel = isArchived ? 'Restore' : 'Archive'
 
   function handleCopy() {
     if (task.executionLog) {
@@ -64,6 +74,25 @@ export function TaskDetail({ task, agents, onDelete, onRunNow, onChangeStatus, o
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
+  }
+
+  function handleDelete() {
+    if (!confirmDelete) {
+      setConfirmDelete(true)
+      return
+    }
+
+    onDelete?.(task.id)
+    setConfirmDelete(false)
+  }
+
+  function handleArchive() {
+    if (isArchived) {
+      onRestore?.(task.id)
+      return
+    }
+
+    onArchive?.(task.id)
   }
 
   const statusDropdown = (compact = false) => (
@@ -252,11 +281,19 @@ export function TaskDetail({ task, agents, onDelete, onRunNow, onChangeStatus, o
 
         {mobile && (
           <div className="flex items-center gap-4 pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
-            <button onClick={() => onDelete?.(task.id)} className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 transition-colors">
-              <Trash2 className="w-3.5 h-3.5" /> Delete
+            <button
+              onClick={handleDelete}
+              disabled={isRunning}
+              className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:text-slate-300"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> {confirmDelete ? 'Confirm delete' : 'Delete'}
             </button>
-            <button className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-              <Archive className="w-3.5 h-3.5" /> Archive
+            <button
+              onClick={handleArchive}
+              disabled={isRunning}
+              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:cursor-not-allowed disabled:text-slate-300"
+            >
+              <Archive className="w-3.5 h-3.5" /> {archiveLabel}
             </button>
           </div>
         )}
@@ -341,11 +378,19 @@ export function TaskDetail({ task, agents, onDelete, onRunNow, onChangeStatus, o
           </div>
         </div>
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-4">
-          <button onClick={() => onDelete?.(task.id)} className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 transition-colors">
-            <Trash2 className="w-3.5 h-3.5" /> Delete
+          <button
+            onClick={handleDelete}
+            disabled={isRunning}
+            className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 transition-colors disabled:cursor-not-allowed disabled:text-slate-300"
+          >
+            <Trash2 className="w-3.5 h-3.5" /> {confirmDelete ? 'Confirm delete' : 'Delete'}
           </button>
-          <button className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-            <Archive className="w-3.5 h-3.5" /> Archive
+          <button
+            onClick={handleArchive}
+            disabled={isRunning}
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:cursor-not-allowed disabled:text-slate-300"
+          >
+            <Archive className="w-3.5 h-3.5" /> {archiveLabel}
           </button>
         </div>
       </div>

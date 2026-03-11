@@ -6,6 +6,7 @@ export const taskStatusSchema = t.Union([
   t.Literal('done'),
   t.Literal('failed'),
   t.Literal('cancelled'),
+  t.Literal('archived'),
 ])
 
 export const taskLastRunStatusSchema = t.Union([
@@ -112,6 +113,11 @@ export const tasksDashboardResponseSchema = t.Object({
   tasks: t.Array(taskSchema),
   templates: t.Array(taskTemplateSchema),
   agents: t.Array(agentRefSchema),
+  syncedAt: t.String(),
+})
+
+export const archivedTasksResponseSchema = t.Object({
+  tasks: t.Array(taskSchema),
   syncedAt: t.String(),
 })
 

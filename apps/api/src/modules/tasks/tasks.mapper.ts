@@ -35,6 +35,7 @@ function startOfUtcDay(ms: number): number {
 
 function deriveAutomationStatus(task: LocalTaskRecord, nowMs: number): AutomationStatus | undefined {
   if (task.schedule.type !== 'recurring') return undefined
+  if (task.status === 'archived') return undefined
   if (task.status === 'cancelled') return 'paused'
   if (task.status === 'running' || task.lastRunStatus === 'running') return 'running'
   if (task.status === 'failed' || task.lastRunStatus === 'failed' || task.lastRunStatus === 'timeout') return 'attention'
@@ -46,6 +47,7 @@ function deriveAutomationStatus(task: LocalTaskRecord, nowMs: number): Automatio
 
 function deriveAgendaState(task: LocalTaskRecord): AgendaState | undefined {
   if (task.schedule.type !== 'one_time') return undefined
+  if (task.status === 'archived') return undefined
   if (task.status === 'running') return 'in_progress'
   if (task.status === 'failed') return 'blocked'
   if (task.status === 'done') return 'done'
@@ -55,6 +57,7 @@ function deriveAgendaState(task: LocalTaskRecord): AgendaState | undefined {
 
 function deriveAgendaBucket(task: LocalTaskRecord, nowMs: number): AgendaBucket | undefined {
   if (task.schedule.type !== 'one_time') return undefined
+  if (task.status === 'archived') return undefined
   if (task.status === 'done') return 'completed'
   if (task.status === 'cancelled') return 'cancelled'
 

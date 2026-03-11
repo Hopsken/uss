@@ -1,4 +1,5 @@
 import type {
+  ArchivedTasksResponse,
   BootstrapStartRequest,
   BootstrapStartResponse,
   BootstrapStatusResponse,
@@ -194,6 +195,19 @@ export async function fetchTasksDashboard(agentId?: string): Promise<TasksDashbo
       .json<TasksDashboardResponse>()
   } catch (error) {
     return handleApiError(error, 'Failed to fetch tasks dashboard')
+  }
+}
+
+export async function fetchArchivedTasks(agentId?: string): Promise<ArchivedTasksResponse> {
+  try {
+    return await api
+      .get('v1/tasks/archived', {
+        searchParams: agentId ? { agentId } : undefined,
+        cache: 'no-store',
+      })
+      .json<ArchivedTasksResponse>()
+  } catch (error) {
+    return handleApiError(error, 'Failed to fetch archived tasks')
   }
 }
 

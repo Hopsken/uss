@@ -9,6 +9,7 @@ import {
   createTaskTemplate,
   deleteTask,
   deleteTaskTemplate,
+  fetchArchivedTasks,
   fetchTasksDashboard,
   reassignTask,
   runTaskNow,
@@ -34,9 +35,15 @@ export function useTasksDashboard(initialAgentFilter: string | null) {
     queryFn: () => fetchTasksDashboard(agentFilter ?? undefined),
   })
 
+  const archivedTasksQuery = useQuery({
+    queryKey: queryKeys.tasks.archived(agentFilter ?? undefined),
+    queryFn: () => fetchArchivedTasks(agentFilter ?? undefined),
+  })
+
   const invalidateTaskData = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: TASKS_DASHBOARD_ROOT_KEY }),
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'archived'] }),
       queryClient.invalidateQueries({ queryKey: queryKeys.bridge.dashboard }),
     ])
   }
@@ -93,6 +100,7 @@ export function useTasksDashboard(initialAgentFilter: string | null) {
   })
 
   const tasks = dashboardQuery.data?.tasks ?? []
+  const archivedTasks = archivedTasksQuery.data?.tasks ?? []
   const recurringTasks = useMemo(
     () => tasks.filter((task) => task.schedule.type === 'recurring'),
     [tasks],
@@ -112,11 +120,14 @@ export function useTasksDashboard(initialAgentFilter: string | null) {
     createTemplateMutation.isPending ||
     updateTemplateMutation.isPending ||
     deleteTemplateMutation.isPending ||
-    dashboardQuery.isFetching
+    dashboardQuery.isFetching ||
+    archivedTasksQuery.isFetching
 
   return {
     dashboardQuery,
+    archivedTasksQuery,
     tasks,
+    archivedTasks,
     recurringTasks,
     agendaTasks,
     templates: dashboardQuery.data?.templates ?? [],
@@ -134,6 +145,11 @@ export function useTasksDashboard(initialAgentFilter: string | null) {
       deleteTaskMutation.mutate(taskId)
       setSelectedTaskId(null)
     },
+    archiveTask: (taskId: string) => {
+      changeStatusMutation.mutate({ taskId, status: 'archived' })
+      setSelectedTaskId(null)
+    },
+    restoreTask: (taskId: string) => changeStatusMutation.mutate({ taskId, status: 'pending' }),
     runTaskNow: (taskId: string) => runNowMutation.mutate(taskId),
     changeStatus: (taskId: string, status: TaskStatus) => changeStatusMutation.mutate({ taskId, status }),
     reassignTask: (taskId: string, agentId: string) => reassignMutation.mutate({ taskId, agentId }),

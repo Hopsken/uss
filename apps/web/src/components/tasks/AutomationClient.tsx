@@ -1,9 +1,9 @@
 'use client'
 
-import { Alert, Box, Button, Center, Loader, Stack, Text } from '@mantine/core'
 import { usePathname, useRouter } from 'next/navigation'
 import { Archive, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { ErrorState, LoadingState, PageContainer, PageHeader } from '@/components/app/page-shell'
 import { ArchivedTasksPanel } from './ArchivedTasksPanel'
 import { CreateTaskModal } from './CreateTaskModal'
 import { TaskDetail } from './TaskDetail'
@@ -48,7 +48,7 @@ function matchesSearch(task: Task, query: string): boolean {
 
 export function AutomationClient({ initialAgentFilter }: { initialAgentFilter: string | null }) {
   const router = useRouter()
-  const pathname = usePathname()
+  const pathname = usePathname() ?? '/automation'
   const [automationView, setAutomationView] = useState<AutomationView>('by_status')
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [archivedOpen, setArchivedOpen] = useState(false)
@@ -78,44 +78,32 @@ export function AutomationClient({ initialAgentFilter }: { initialAgentFilter: s
   )
 
   return (
-    <Box p={{ base: 'md', md: 'xl' }} maw={1480} mx="auto" h="100%">
-      <Stack gap="md" h="100%" style={{ minHeight: 0 }}>
-        <div className="px-1">
-          <h1 className="text-[2rem] font-semibold tracking-tight text-slate-950" style={{ fontFamily: 'var(--font-heading)' }}>
-            Automation
-          </h1>
-        </div>
+    <PageContainer size="xwide" className="h-full">
+      <PageHeader
+        eyebrow="Operate"
+        title="Automation"
+        description="Recurring work, grouped by status or assignee, with quick access to archives and templates."
+      />
 
-        {state.dashboardQuery.isPending && !state.dashboardQuery.data ? (
-          <Center py="xl">
-            <Loader color="sky" />
-          </Center>
-        ) : null}
+      {state.dashboardQuery.isPending && !state.dashboardQuery.data ? <LoadingState label="Loading automation" /> : null}
 
-        {state.dashboardQuery.error && !state.dashboardQuery.data ? (
-          <Alert color="red" title="Unable to load automation">
-            <Stack gap="xs">
-              <Text size="sm">
-                {state.dashboardQuery.error instanceof Error ? state.dashboardQuery.error.message : 'Unknown error'}
-              </Text>
-              <Button variant="light" size="xs" w="fit-content" onClick={() => state.dashboardQuery.refetch()} loading={state.dashboardQuery.isFetching}>
-                Retry
-              </Button>
-            </Stack>
-          </Alert>
-        ) : null}
+      {state.dashboardQuery.error && !state.dashboardQuery.data ? (
+        <ErrorState
+          title="Unable to load automation"
+          message={state.dashboardQuery.error instanceof Error ? state.dashboardQuery.error.message : 'Unknown error'}
+          onRetry={() => state.dashboardQuery.refetch()}
+        />
+      ) : null}
 
-        {state.statusError ? (
-          <Alert color="red" title="Status update blocked" withCloseButton onClose={() => state.setStatusError(null)}>
-            {state.statusError}
-          </Alert>
-        ) : null}
+      {state.statusError ? (
+        <ErrorState title="Status update blocked" message={state.statusError} />
+      ) : null}
 
-        {state.dashboardQuery.data ? (
-          <Box
-            className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]"
-            style={{ opacity: state.busy ? 0.82 : 1 }}
-          >
+      {state.dashboardQuery.data ? (
+        <div
+          className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border border-border/70 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]"
+          style={{ opacity: state.busy ? 0.82 : 1 }}
+        >
             <TasksToolbar
               primary={
                 <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
@@ -182,9 +170,8 @@ export function AutomationClient({ initialAgentFilter }: { initialAgentFilter: s
               onSelectTask={state.setSelectedTaskId}
               search={search}
             />
-          </Box>
-        ) : null}
-      </Stack>
+        </div>
+      ) : null}
 
       <UtilityPanel
         open={archivedOpen}
@@ -258,7 +245,7 @@ export function AutomationClient({ initialAgentFilter }: { initialAgentFilter: s
           }}
         />
       ) : null}
-    </Box>
+    </PageContainer>
   )
 }
 

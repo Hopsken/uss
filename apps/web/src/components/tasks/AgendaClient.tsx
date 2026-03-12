@@ -1,10 +1,10 @@
 'use client'
 
-import { Alert, Box, Button, Center, Loader, Stack, Text } from '@mantine/core'
 import { usePathname, useRouter } from 'next/navigation'
 import { Archive, ChevronDown, Plus } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
+import { ErrorState, LoadingState, PageContainer, PageHeader } from '@/components/app/page-shell'
 import { ArchivedTasksPanel } from './ArchivedTasksPanel'
 import { CreateTaskModal } from './CreateTaskModal'
 import { TaskDetail } from './TaskDetail'
@@ -100,7 +100,7 @@ function groupAgendaTasks(tasks: Task[]): Record<AgendaSectionKey, Task[]> {
 
 export function AgendaClient({ initialAgentFilter }: { initialAgentFilter: string | null }) {
   const router = useRouter()
-  const pathname = usePathname()
+  const pathname = usePathname() ?? '/agenda'
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [archivedOpen, setArchivedOpen] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
@@ -123,44 +123,30 @@ export function AgendaClient({ initialAgentFilter }: { initialAgentFilter: strin
   const filteredTasks = useMemo(() => state.agendaTasks.filter((task) => matchesSearch(task, search)), [search, state.agendaTasks])
 
   return (
-    <Box p={{ base: 'md', md: 'xl' }} maw={1380} mx="auto" h="100%">
-      <Stack gap="md" h="100%" style={{ minHeight: 0 }}>
-        <div className="px-1">
-          <h1 className="text-[2rem] font-semibold tracking-tight text-slate-950" style={{ fontFamily: 'var(--font-heading)' }}>
-            Agenda
-          </h1>
-        </div>
+    <PageContainer size="wide" className="h-full">
+      <PageHeader
+        eyebrow="Operate"
+        title="Agenda"
+        description="One-time work grouped by urgency, due date, and completion state."
+      />
 
-        {state.dashboardQuery.isPending && !state.dashboardQuery.data ? (
-          <Center py="xl">
-            <Loader color="sky" />
-          </Center>
-        ) : null}
+      {state.dashboardQuery.isPending && !state.dashboardQuery.data ? <LoadingState label="Loading agenda" /> : null}
 
-        {state.dashboardQuery.error && !state.dashboardQuery.data ? (
-          <Alert color="red" title="Unable to load agenda">
-            <Stack gap="xs">
-              <Text size="sm">
-                {state.dashboardQuery.error instanceof Error ? state.dashboardQuery.error.message : 'Unknown error'}
-              </Text>
-              <Button variant="light" size="xs" w="fit-content" onClick={() => state.dashboardQuery.refetch()} loading={state.dashboardQuery.isFetching}>
-                Retry
-              </Button>
-            </Stack>
-          </Alert>
-        ) : null}
+      {state.dashboardQuery.error && !state.dashboardQuery.data ? (
+        <ErrorState
+          title="Unable to load agenda"
+          message={state.dashboardQuery.error instanceof Error ? state.dashboardQuery.error.message : 'Unknown error'}
+          onRetry={() => state.dashboardQuery.refetch()}
+        />
+      ) : null}
 
-        {state.statusError ? (
-          <Alert color="red" title="Status update blocked" withCloseButton onClose={() => state.setStatusError(null)}>
-            {state.statusError}
-          </Alert>
-        ) : null}
+      {state.statusError ? <ErrorState title="Status update blocked" message={state.statusError} /> : null}
 
-        {state.dashboardQuery.data ? (
-          <Box
-            className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border border-slate-200 bg-white"
-            style={{ opacity: state.busy ? 0.82 : 1 }}
-          >
+      {state.dashboardQuery.data ? (
+        <div
+          className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px] border border-border/70 bg-white"
+          style={{ opacity: state.busy ? 0.82 : 1 }}
+        >
             <TasksToolbar
               primary={
                 <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
@@ -212,9 +198,8 @@ export function AgendaClient({ initialAgentFilter }: { initialAgentFilter: strin
               onRunNow={state.runTaskNow}
               onChangeStatus={state.changeStatus}
             />
-          </Box>
-        ) : null}
-      </Stack>
+        </div>
+      ) : null}
 
       <UtilityPanel
         open={archivedOpen}
@@ -289,7 +274,7 @@ export function AgendaClient({ initialAgentFilter }: { initialAgentFilter: strin
           }}
         />
       ) : null}
-    </Box>
+    </PageContainer>
   )
 }
 

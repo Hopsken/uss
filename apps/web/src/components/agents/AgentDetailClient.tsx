@@ -1,10 +1,10 @@
 'use client'
 
-import { Alert, Box, Button, Center, Loader, Stack, Text } from '@mantine/core'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { AgentDetailResponse, UpdateAgentModelRequest } from '@uss/shared'
 import { useRouter } from 'next/navigation'
 import { AgentDetail } from '@/components/agents/AgentDetail'
+import { ErrorState, LoadingState, PageContainer } from '@/components/app/page-shell'
 import { fetchAgentDetail, updateAgentModel } from '@/lib/api'
 import { queryKeys } from '@/lib/query-keys'
 
@@ -23,9 +23,7 @@ export function AgentDetailClient({ agentId }: { agentId: string }) {
       const previous = queryClient.getQueryData<AgentDetailResponse>(queryKeys.agents.detail(agentId))
 
       queryClient.setQueryData<AgentDetailResponse>(queryKeys.agents.detail(agentId), (current) => {
-        if (!current) {
-          return current
-        }
+        if (!current) return current
 
         const pickedModel = current.availableModels.find((model) => model.id === body.modelId)
 
@@ -58,47 +56,28 @@ export function AgentDetailClient({ agentId }: { agentId: string }) {
 
   if (detailQuery.isPending && !detailQuery.data) {
     return (
-      <Center py="xl">
-        <Loader color="sky" />
-      </Center>
+      <PageContainer>
+        <LoadingState label="Loading agent details" />
+      </PageContainer>
     )
   }
 
   if (detailQuery.error && !detailQuery.data) {
     const message = detailQuery.error instanceof Error ? detailQuery.error.message : 'Unknown error'
 
-    if (message === 'not_found') {
-      return (
-        <Box p="xl" maw={700} mx="auto">
-          <Alert color="gray" title="Agent not found">
-            <Stack gap="xs">
-              <Text size="sm">Agent {agentId} does not exist or is no longer available.</Text>
-              <Button variant="light" size="xs" w="fit-content" onClick={() => router.push('/agents')}>
-                Back to agents
-              </Button>
-            </Stack>
-          </Alert>
-        </Box>
-      )
-    }
-
     return (
-      <Box p="xl" maw={700} mx="auto">
-        <Alert color="red" title="Unable to load agent details">
-          <Stack gap="xs">
-            <Text size="sm">{message}</Text>
-            <Button variant="light" size="xs" w="fit-content" onClick={() => detailQuery.refetch()} loading={detailQuery.isFetching}>
-              Retry
-            </Button>
-          </Stack>
-        </Alert>
-      </Box>
+      <PageContainer size="narrow">
+        <ErrorState
+          title={message === 'not_found' ? 'Agent not found' : 'Unable to load agent details'}
+          message={message === 'not_found' ? `Agent ${agentId} does not exist or is no longer available.` : message}
+          retryLabel={message === 'not_found' ? 'Back to agents' : 'Retry'}
+          onRetry={message === 'not_found' ? () => router.push('/agents') : () => detailQuery.refetch()}
+        />
+      </PageContainer>
     )
   }
 
-  if (!detailQuery.data) {
-    return null
-  }
+  if (!detailQuery.data) return null
 
   return (
     <AgentDetail
@@ -108,10 +87,7 @@ export function AgentDetailClient({ agentId }: { agentId: string }) {
       onBack={() => router.push('/agents')}
       onViewTasks={(id) => router.push(`/tasks?agentId=${encodeURIComponent(id)}`)}
       onChangeModel={(id, modelId) => {
-        if (id !== agentId) {
-          return
-        }
-
+        if (id !== agentId) return
         updateModelMutation.mutate({ modelId })
       }}
     />

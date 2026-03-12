@@ -1,37 +1,50 @@
 'use client'
 
-import { usePathname, useRouter } from 'next/navigation'
+import {
+  Activity,
+  Bot,
+  CalendarDays,
+  Gauge,
+  Puzzle,
+  Radio,
+  RefreshCcw,
+  Settings,
+} from 'lucide-react'
+import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { AppShell } from '@/components/shell'
 
-const NAV_ITEMS = [
-  { label: 'Bridge', href: '/bridge' },
-  { label: 'Agents', href: '/agents' },
-  { label: 'Automation', href: '/automation' },
-  { label: 'Agenda', href: '/agenda' },
-  { label: 'Activity', href: '/activity' },
-  { label: 'Usage', href: '/usage' },
-  { label: 'Skills', href: '/skills' },
-  { label: 'Settings', href: '/settings' },
+const NAV_GROUPS = [
+  {
+    label: 'Command',
+    items: [
+      { label: 'Bridge', href: '/bridge', icon: Radio, description: 'Fleet overview' },
+      { label: 'Agents', href: '/agents', icon: Bot, description: 'Crew roster' },
+      { label: 'Activity', href: '/activity', icon: Activity, description: 'Live event feed' },
+      { label: 'Usage', href: '/usage', icon: Gauge, description: 'Spend and tokens' },
+    ],
+  },
+  {
+    label: 'Operate',
+    items: [
+      { label: 'Automation', href: '/automation', icon: RefreshCcw, description: 'Recurring work' },
+      { label: 'Agenda', href: '/agenda', icon: CalendarDays, description: 'One-time tasks' },
+      { label: 'Skills', href: '/skills', icon: Puzzle, description: 'Skill registry' },
+    ],
+  },
+  {
+    label: 'System',
+    items: [{ label: 'Settings', href: '/settings', icon: Settings, description: 'Security and auth' }],
+  },
 ]
 
 export function ShellFrame({ children }: { children: ReactNode }) {
-  const pathname = usePathname()
-  const router = useRouter()
+  const pathname = usePathname() ?? ''
   const isAuthRoute = pathname.startsWith('/auth')
-
-  const items = NAV_ITEMS.map((item) => ({
-    ...item,
-    isActive: pathname === item.href || pathname.startsWith(`${item.href}/`),
-  }))
 
   if (isAuthRoute) {
     return <>{children}</>
   }
 
-  return (
-    <AppShell navigationItems={items} onNavigate={(href) => router.push(href)}>
-      {children}
-    </AppShell>
-  )
+  return <AppShell navigationGroups={NAV_GROUPS} activePath={pathname}>{children}</AppShell>
 }

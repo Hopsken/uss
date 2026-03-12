@@ -1,7 +1,7 @@
 'use client'
 
-import { Box, Card, Group, Text } from '@mantine/core'
 import type { UsagePeriod } from '@uss/shared'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 function formatTokens(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
@@ -17,34 +17,21 @@ interface Props {
 
 export function UsageTile({ label, period, onClick }: Props) {
   return (
-    <Card
-      withBorder
-      radius="lg"
-      style={{ cursor: 'pointer' }}
-      onMouseEnter={(e) => {
-        ;(e.currentTarget as HTMLDivElement).style.borderColor = 'var(--mantine-color-sky-5)'
-      }}
-      onMouseLeave={(e) => {
-        ;(e.currentTarget as HTMLDivElement).style.borderColor = ''
-      }}
-      onClick={onClick}
-    >
-      <Text size="xs" fw={700} tt="uppercase" c="slate.6" ff="var(--font-heading)">
-        {label}
-      </Text>
-      <Text ff="var(--font-mono)" fw={700} size="xl" mt="xs">
-        ${period.costUsd.toFixed(2)}
-      </Text>
-      <Group mt="sm" gap="xl">
-        <Box>
-          <Text size="xs" c="dimmed">Tokens</Text>
-          <Text ff="var(--font-mono)" size="sm">{formatTokens(period.tokens)}</Text>
-        </Box>
-        <Box>
-          <Text size="xs" c="dimmed">Conversations</Text>
-          <Text ff="var(--font-mono)" size="sm">{period.conversations}</Text>
-        </Box>
-      </Group>
+    <Card className="cursor-pointer border-border/70 transition-colors hover:border-primary/50" onClick={onClick}>
+      <CardHeader>
+        <CardDescription className="text-[11px] uppercase tracking-[0.28em]">{label}</CardDescription>
+        <CardTitle className="font-mono text-3xl">${period.costUsd.toFixed(2)}</CardTitle>
+      </CardHeader>
+      <CardContent className="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <div className="text-xs text-muted-foreground">Tokens</div>
+          <div className="font-mono">{formatTokens(period.tokens)}</div>
+        </div>
+        <div>
+          <div className="text-xs text-muted-foreground">Conversations</div>
+          <div className="font-mono">{period.conversations}</div>
+        </div>
+      </CardContent>
     </Card>
   )
 }

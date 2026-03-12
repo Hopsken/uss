@@ -1,11 +1,10 @@
 'use client'
 
-import { Alert, Box, Button, Center, Loader, Stack, Text } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
-import { AlertCircle } from 'lucide-react'
 import { fetchBridgeData } from '@/lib/api'
 import { queryKeys } from '@/lib/query-keys'
 import { BridgeDashboard } from './BridgeDashboard'
+import { ErrorState, LoadingState, PageContainer } from '@/components/app/page-shell'
 
 export function BridgeClient() {
   const bridgeQuery = useQuery({
@@ -13,28 +12,25 @@ export function BridgeClient() {
     queryFn: fetchBridgeData,
   })
 
-  return (
-    <>
-      {bridgeQuery.isPending && !bridgeQuery.data ? (
-        <Center py="xl">
-          <Loader color="sky" />
-        </Center>
-      ) : null}
+  if (bridgeQuery.isPending && !bridgeQuery.data) {
+    return (
+      <PageContainer>
+        <LoadingState label="Loading bridge overview" />
+      </PageContainer>
+    )
+  }
 
-      {bridgeQuery.error && !bridgeQuery.data ? (
-        <Box p={{ base: 'md', md: 'xl' }} maw={1100} mx="auto">
-          <Alert color="red" icon={<AlertCircle size={16} />} title="Unable to load bridge data">
-            <Stack gap="xs">
-              <Text size="sm">{bridgeQuery.error instanceof Error ? bridgeQuery.error.message : 'Unknown error'}</Text>
-              <Button variant="light" size="xs" onClick={() => bridgeQuery.refetch()} loading={bridgeQuery.isFetching}>
-                Retry
-              </Button>
-            </Stack>
-          </Alert>
-        </Box>
-      ) : null}
+  if (bridgeQuery.error && !bridgeQuery.data) {
+    return (
+      <PageContainer>
+        <ErrorState
+          title="Unable to load bridge data"
+          message={bridgeQuery.error instanceof Error ? bridgeQuery.error.message : 'Unknown error'}
+          onRetry={() => bridgeQuery.refetch()}
+        />
+      </PageContainer>
+    )
+  }
 
-      {bridgeQuery.data ? <BridgeDashboard data={bridgeQuery.data} /> : null}
-    </>
-  )
+  return bridgeQuery.data ? <BridgeDashboard data={bridgeQuery.data} /> : null
 }

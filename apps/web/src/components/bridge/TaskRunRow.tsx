@@ -1,7 +1,8 @@
 'use client'
 
-import { Badge, Box, Group, Text } from '@mantine/core'
 import { CheckCircle2, Clock, Loader2, X } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import type { RecentTaskRun, TaskRunStatus } from '@uss/shared'
 
 function relativeTime(iso: string): string {
@@ -15,13 +16,10 @@ function relativeTime(iso: string): string {
 }
 
 function StatusIcon({ status }: { status: TaskRunStatus }) {
-  if (status === 'running')
-    return <Loader2 size={14} color="var(--mantine-color-sky-5)" style={{ animation: 'spin 1s linear infinite' }} />
-  if (status === 'completed')
-    return <CheckCircle2 size={14} color="var(--mantine-color-green-6)" />
-  if (status === 'failed')
-    return <X size={14} color="var(--mantine-color-red-5)" />
-  return <Clock size={14} color="var(--mantine-color-gray-5)" />
+  if (status === 'running') return <Loader2 className="size-4 animate-spin text-primary" />
+  if (status === 'completed') return <CheckCircle2 className="size-4 text-emerald-500" />
+  if (status === 'failed') return <X className="size-4 text-destructive" />
+  return <Clock className="size-4 text-muted-foreground" />
 }
 
 interface Props {
@@ -32,32 +30,24 @@ interface Props {
 
 export function TaskRunRow({ run, isLast, onClick }: Props) {
   return (
-    <Box
-      px="md"
-      py="sm"
-      style={{
-        cursor: 'pointer',
-        borderBottom: isLast ? 'none' : '1px solid var(--mantine-color-gray-2)',
-      }}
+    <button
+      className={cn(
+        'flex w-full items-center justify-between gap-4 px-1 py-3 text-left transition-colors hover:bg-muted/30',
+        !isLast && 'border-b border-border/60',
+      )}
       onClick={onClick}
     >
-      <Group justify="space-between" wrap="nowrap">
-        <Group wrap="nowrap" gap="xs">
-          <StatusIcon status={run.status} />
-          <Box>
-            <Text size="sm" fw={500} lineClamp={1}>{run.taskName}</Text>
-            {run.error && (
-              <Text size="xs" c="red.6" lineClamp={1}>{run.error}</Text>
-            )}
-          </Box>
-        </Group>
-        <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
-          <Badge variant="light" color="sky" size="xs">{run.agentName}</Badge>
-          <Text size="xs" c="dimmed" ff="var(--font-mono)" style={{ whiteSpace: 'nowrap' }}>
-            {relativeTime(run.startedAt)}
-          </Text>
-        </Group>
-      </Group>
-    </Box>
+      <div className="flex min-w-0 items-start gap-3">
+        <StatusIcon status={run.status} />
+        <div className="min-w-0">
+          <div className="truncate text-sm font-medium text-foreground">{run.taskName}</div>
+          {run.error ? <div className="truncate text-xs text-destructive">{run.error}</div> : null}
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <Badge variant="secondary">{run.agentName}</Badge>
+        <span className="font-mono text-xs text-muted-foreground">{relativeTime(run.startedAt)}</span>
+      </div>
+    </button>
   )
 }

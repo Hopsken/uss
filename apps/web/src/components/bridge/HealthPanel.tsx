@@ -1,8 +1,10 @@
 'use client'
 
-import { Box, Card, Group, Stack, Text } from '@mantine/core'
 import { AlertCircle } from 'lucide-react'
-import type { ErrorLevel, OpenClawStatus, ProviderStatus, SystemHealth } from '@uss/shared'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
+import type { OpenClawStatus, ProviderStatus, SystemHealth } from '@uss/shared'
 
 function formatUptime(seconds: number): string {
   if (seconds < 60) return `${seconds}s`
@@ -14,99 +16,58 @@ function formatUptime(seconds: number): string {
   return `${days}d ${hours % 24}h`
 }
 
-function openclawDotColor(status: OpenClawStatus): string {
-  if (status === 'running') return 'var(--mantine-color-green-5)'
-  if (status === 'stopped') return 'var(--mantine-color-gray-4)'
-  return 'var(--mantine-color-red-5)'
-}
-
-function providerDotColor(status: ProviderStatus): string {
-  if (status === 'healthy') return 'var(--mantine-color-green-5)'
-  if (status === 'degraded') return 'var(--mantine-color-amber-5)'
-  return 'var(--mantine-color-red-5)'
-}
-
-function Dot({ color, pulse }: { color: string; pulse?: boolean }) {
-  return (
-    <Box
-      w={8}
-      h={8}
-      style={{ borderRadius: '50%', background: color, flexShrink: 0 }}
-      className={pulse ? 'uss-status-busy' : undefined}
-    />
-  )
+function statusClass(status: OpenClawStatus | ProviderStatus) {
+  if (status === 'running' || status === 'healthy') return 'bg-emerald-500'
+  if (status === 'degraded') return 'bg-amber-500'
+  if (status === 'stopped') return 'bg-muted-foreground'
+  return 'bg-destructive'
 }
 
 export function HealthPanel({ health }: { health: SystemHealth }) {
   const { openclaw, providers, recentErrors } = health
 
   return (
-    <Stack gap="sm">
-      {/* OpenClaw card */}
-      <Card withBorder radius="md" p="sm">
-        <Group justify="space-between" align="center">
-          <Group gap="xs">
-            <Dot color={openclawDotColor(openclaw.status)} pulse={openclaw.status === 'running'} />
-            <Box>
-              <Text size="xs" c="dimmed">OpenClaw</Text>
-              <Text size="sm" fw={600}>
-                {openclaw.status === 'running' ? 'Running' : openclaw.status === 'stopped' ? 'Stopped' : 'Error'}
-              </Text>
-            </Box>
-          </Group>
-          <Box style={{ textAlign: 'right' }}>
-            <Text size="xs" c="dimmed" ff="var(--font-mono)">v{openclaw.version}</Text>
-            <Text size="xs" c="dimmed" ff="var(--font-mono)">{formatUptime(openclaw.uptimeSeconds)}</Text>
-          </Box>
-        </Group>
+    <div className="flex flex-col gap-3">
+      <Card className="border-border/70">
+        <CardContent className="flex items-center justify-between py-4">
+          <div className="flex items-center gap-3">
+            <span className={cn('size-2 rounded-full', statusClass(openclaw.status), openclaw.status === 'running' && 'uss-status-busy')} />
+            <div>
+              <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground">OpenClaw</div>
+              <div className="text-sm font-semibold capitalize text-foreground">{openclaw.status}</div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="font-mono text-xs text-muted-foreground">v{openclaw.version}</div>
+            <div className="font-mono text-xs text-muted-foreground">{formatUptime(openclaw.uptimeSeconds)}</div>
+          </div>
+        </CardContent>
       </Card>
 
-      {/* Provider rows */}
       {providers.map((provider) => (
-        <Card key={provider.id} withBorder radius="md" p="sm">
-          <Group justify="space-between">
-            <Group gap="xs">
-              <Dot color={providerDotColor(provider.status)} />
-              <Text size="sm">{provider.name}</Text>
-            </Group>
-            <Text
-              size="xs"
-              ff="var(--font-mono)"
-              c={provider.latencyMs > 1000 ? 'amber.7' : 'dimmed'}
-            >
-              {provider.latencyMs}ms
-            </Text>
-          </Group>
+        <Card key={provider.id} className="border-border/70">
+          <CardContent className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-3">
+              <span className={cn('size-2 rounded-full', statusClass(provider.status))} />
+              <div className="text-sm text-foreground">{provider.name}</div>
+            </div>
+            <div className="font-mono text-xs text-muted-foreground">{provider.latencyMs}ms</div>
+          </CardContent>
         </Card>
       ))}
 
-      {/* Errors/warnings */}
       {recentErrors.slice(0, 2).map((err) => (
-        <Card
-          key={err.id}
-          withBorder
-          radius="md"
-          p="sm"
-          bg={err.level === 'error' ? 'red.0' : 'yellow.0'}
-        >
-          <Group gap="xs" align="flex-start" wrap="nowrap">
-            <AlertCircle
-              size={14}
-              color={err.level === 'error' ? 'var(--mantine-color-red-6)' : 'var(--mantine-color-yellow-7)'}
-              style={{ flexShrink: 0, marginTop: 1 }}
-            />
-            <Box>
-              <Text size="xs" c={err.level === 'error' ? 'red.7' : 'yellow.8'} lineClamp={2}>
-                {err.message}
-              </Text>
-              <Text size="xs" c="dimmed" ff="var(--font-mono)" mt={2}>
-                {formatRelative(err.occurredAt)}
-              </Text>
-            </Box>
-          </Group>
+        <Card key={err.id} className="border-amber-200/80 bg-amber-50/60">
+          <CardContent className="flex gap-3 py-4">
+            <AlertCircle className={cn('mt-0.5 size-4 shrink-0', err.level === 'error' ? 'text-destructive' : 'text-amber-600')} />
+            <div className="space-y-2">
+              <div className={cn('text-sm', err.level === 'error' ? 'text-destructive' : 'text-amber-900')}>{err.message}</div>
+              <Badge variant="outline" className="font-mono text-[10px]">{formatRelative(err.occurredAt)}</Badge>
+            </div>
+          </CardContent>
         </Card>
       ))}
-    </Stack>
+    </div>
   )
 }
 

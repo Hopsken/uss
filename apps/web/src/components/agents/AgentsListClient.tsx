@@ -1,7 +1,8 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
+import { LoadingState, PageContainer } from '@/components/app/page-shell'
 import { AgentsList } from '@/components/agents/AgentsList'
 import { fetchAgentsList } from '@/lib/api'
 import { queryKeys } from '@/lib/query-keys'
@@ -12,6 +13,14 @@ export function AgentsListClient() {
     queryKey: queryKeys.agents.list,
     queryFn: fetchAgentsList,
   })
+
+  if (agentsQuery.isPending && !agentsQuery.data) {
+    return (
+      <PageContainer>
+        <LoadingState label="Loading agents" />
+      </PageContainer>
+    )
+  }
 
   return (
     <AgentsList

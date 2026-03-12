@@ -1,22 +1,15 @@
 'use client'
 
-import { Avatar, Badge, Box, Card, Text } from '@mantine/core'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 import type { BridgeAgent } from '@uss/shared'
 
-function StatusDot({ status }: { status: BridgeAgent['status'] }) {
-  const color =
-    status === 'busy' ? 'var(--mantine-color-sky-5)' :
-    status === 'error' ? 'var(--mantine-color-red-5)' :
-    'var(--mantine-color-gray-4)'
-
-  return (
-    <Box
-      w={8}
-      h={8}
-      style={{ borderRadius: '50%', background: color, flexShrink: 0 }}
-      className={status === 'busy' ? 'uss-status-busy' : undefined}
-    />
-  )
+function statusClass(status: BridgeAgent['status']) {
+  if (status === 'busy') return 'bg-amber-500'
+  if (status === 'error') return 'bg-destructive'
+  return 'bg-emerald-500'
 }
 
 interface Props {
@@ -29,52 +22,26 @@ export function AgentCard({ agent, onClick }: Props) {
 
   return (
     <Card
-      withBorder
-      radius="md"
-      p="sm"
-      w={176}
-      style={{ cursor: 'pointer', flexShrink: 0 }}
-      styles={{
-        root: {
-          transition: 'border-color 0.15s',
-        },
-      }}
-      onMouseEnter={(e) => {
-        ;(e.currentTarget as HTMLDivElement).style.borderColor = 'var(--mantine-color-sky-5)'
-      }}
-      onMouseLeave={(e) => {
-        ;(e.currentTarget as HTMLDivElement).style.borderColor = ''
-      }}
+      className="w-48 shrink-0 cursor-pointer border-border/70 transition-colors hover:border-primary/50"
       onClick={onClick}
     >
-      <Box style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-        <Avatar
-          src={agent.avatarUrl ?? robohash}
-          radius="xl"
-          size={40}
-        />
-        <StatusDot status={agent.status} />
-      </Box>
-
-      <Text fw={600} size="sm" lineClamp={1}>{agent.name}</Text>
-      <Text size="xs" c="dimmed" lineClamp={1}>{agent.role}</Text>
-
-      <Badge
-        mt={6}
-        variant="light"
-        color="gray"
-        ff="var(--font-mono)"
-        size="xs"
-        style={{ maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}
-      >
-        {agent.model}
-      </Badge>
-
-      {agent.currentTask && (
-        <Text mt={4} size="xs" c="sky.6" lineClamp={1}>
-          ↳ {agent.currentTask}
-        </Text>
-      )}
+      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
+        <Avatar className="size-10 rounded-xl">
+          <AvatarImage src={agent.avatarUrl ?? robohash} alt={agent.name} />
+          <AvatarFallback>{agent.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+        </Avatar>
+        <span className={cn('mt-1 size-2 rounded-full', statusClass(agent.status), agent.status === 'busy' && 'uss-status-busy')} />
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div>
+          <div className="truncate text-sm font-semibold text-foreground">{agent.name}</div>
+          <div className="truncate text-xs text-muted-foreground">{agent.role}</div>
+        </div>
+        <Badge variant="secondary" className="max-w-full truncate font-mono">
+          {agent.model}
+        </Badge>
+        {agent.currentTask ? <div className="truncate text-xs text-primary">↳ {agent.currentTask}</div> : null}
+      </CardContent>
     </Card>
   )
 }

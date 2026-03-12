@@ -1,40 +1,22 @@
 'use client'
 
-import {
-  ActionIcon,
-  Avatar,
-  Badge,
-  Box,
-  Button,
-  Card,
-  Divider,
-  Grid,
-  Group,
-  Menu,
-  Paper,
-  ScrollArea,
-  SimpleGrid,
-  Stack,
-  Text,
-  Title,
-} from '@mantine/core'
-import {
-  ArrowLeft,
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  Clock,
-  Loader2,
-  XCircle,
-} from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock, Loader2, XCircle } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { AgentDetailPayload, AgentModel, AgentTaskStatus } from '@uss/shared'
-
-function statusColor(status: AgentDetailPayload['status']): string {
-  if (status === 'busy') return 'var(--mantine-color-amber-5)'
-  if (status === 'error') return 'var(--mantine-color-red-5)'
-  return 'var(--mantine-color-gray-4)'
-}
+import { MetricCard, PageContainer, PageHeader, SectionCard } from '@/components/app/page-shell'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { cn } from '@/lib/utils'
 
 function formatTokens(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
@@ -52,54 +34,44 @@ function relativeTime(iso: string): string {
   return `${Math.floor(hours / 24)}d ago`
 }
 
-function taskStatusIcon(status: AgentTaskStatus): React.ReactNode {
-  if (status === 'running') return <Loader2 size={14} className="uss-status-busy" />
-  if (status === 'completed') return <CheckCircle2 size={14} color="var(--mantine-color-green-6)" />
-  if (status === 'failed') return <XCircle size={14} color="var(--mantine-color-red-6)" />
-  return <Clock size={14} color="var(--mantine-color-gray-6)" />
+function taskStatusIcon(status: AgentTaskStatus) {
+  if (status === 'running') return <Loader2 className="size-4 animate-spin text-primary" />
+  if (status === 'completed') return <CheckCircle2 className="size-4 text-emerald-500" />
+  if (status === 'failed') return <XCircle className="size-4 text-destructive" />
+  return <Clock className="size-4 text-muted-foreground" />
+}
+
+function statusClass(status: AgentDetailPayload['status']) {
+  if (status === 'busy') return 'bg-amber-500'
+  if (status === 'error') return 'bg-destructive'
+  return 'bg-emerald-500'
 }
 
 function MarkdownContent({ content }: { content: string }) {
   const lines = useMemo(() => content.split('\n'), [content])
 
   return (
-    <Stack gap={6}>
+    <div className="space-y-2">
       {lines.map((line, index) => {
         if (line.startsWith('# ')) {
-          return (
-            <Title key={index} order={3} ff="var(--font-heading)">
-              {line.slice(2)}
-            </Title>
-          )
+          return <h3 key={index} className="font-heading text-lg font-semibold">{line.slice(2)}</h3>
         }
 
         if (line.startsWith('## ')) {
-          return (
-            <Text key={index} fw={700} ff="var(--font-heading)" mt="sm">
-              {line.slice(3)}
-            </Text>
-          )
+          return <div key={index} className="pt-3 font-heading text-sm font-semibold uppercase tracking-[0.24em] text-muted-foreground">{line.slice(3)}</div>
         }
 
         if (line.startsWith('- ')) {
-          return (
-            <Text key={index} size="sm" c="dimmed">
-              • {line.slice(2)}
-            </Text>
-          )
+          return <div key={index} className="text-sm text-muted-foreground">• {line.slice(2)}</div>
         }
 
         if (line.trim() === '') {
-          return <Box key={index} h={6} />
+          return <div key={index} className="h-2" />
         }
 
-        return (
-          <Text key={index} size="sm" c="dimmed" style={{ whiteSpace: 'pre-wrap' }}>
-            {line}
-          </Text>
-        )
+        return <p key={index} className="text-sm leading-6 text-muted-foreground">{line}</p>
       })}
-    </Stack>
+    </div>
   )
 }
 
@@ -123,230 +95,122 @@ export function AgentDetail({
   const enabledSkills = agent.skills.filter((skill) => skill.enabled)
 
   return (
-    <Box p={{ base: 'md', md: 'xl' }} maw={1100} mx="auto">
-      <Stack gap="lg">
-        <Button
-          variant="subtle"
-          leftSection={<ArrowLeft size={14} />}
-          onClick={onBack}
-          styles={{ root: { alignSelf: 'flex-start', paddingLeft: 0 } }}
+    <PageContainer>
+      <Button variant="ghost" className="w-fit px-0" onClick={onBack}>
+        <ArrowLeft data-icon="inline-start" />
+        Agents
+      </Button>
+
+      <PageHeader
+        eyebrow="Agent"
+        title={agent.name}
+        description={agent.role}
+        actions={
+          <div className="flex items-center gap-3">
+            <div className="hidden items-center gap-2 rounded-full border border-border/70 bg-background px-3 py-2 text-xs text-muted-foreground sm:flex">
+              <span className={cn('size-2 rounded-full', statusClass(agent.status), agent.status === 'busy' && 'uss-status-busy')} />
+              <span className="capitalize">{agent.status}</span>
+            </div>
+            <Select
+              value={agent.model.id}
+              onValueChange={(value) => onChangeModel?.(agent.id, value)}
+              disabled={isMutatingModel}
+            >
+              <SelectTrigger className="w-[220px] font-mono">
+                <SelectValue placeholder="Select model" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableModels.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    {model.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        }
+      />
+
+      <div className="flex items-start gap-4 rounded-3xl border border-border/70 bg-card px-6 py-5 shadow-sm">
+        <Avatar className="size-16 rounded-2xl">
+          <AvatarImage src={`https://robohash.org/${agent.id}?set=set1&size=112x112`} alt={agent.name} />
+          <AvatarFallback>{agent.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+        </Avatar>
+        <div className="space-y-2">
+          <div className="font-heading text-xl font-semibold">{agent.name}</div>
+          <div className="text-sm text-muted-foreground">{agent.role}</div>
+          <Badge variant="secondary" className="font-mono">{agent.model.name}</Badge>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCard label="Tasks" value={agent.recentTasks.length} detail="recent runs" />
+        <MetricCard label="Skills" value={enabledSkills.length} detail={`of ${agent.skills.length} enabled`} />
+        <MetricCard label="Cost" value={`$${agent.usageSummary.costUsd.toFixed(2)}`} detail="this period" />
+        <MetricCard label="Tokens" value={formatTokens(agent.usageSummary.tokens)} detail={`${agent.usageSummary.conversations} conversations`} />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SectionCard
+          title="Recent Tasks"
+          description="Latest work executed by this agent."
+          action={<Button variant="ghost" size="sm" onClick={() => onViewTasks?.(agent.id)}>View all</Button>}
         >
-          Agents
-        </Button>
-
-        <Group justify="space-between" align="flex-start" wrap="wrap">
-          <Group align="flex-start">
-            <Avatar src={`https://robohash.org/${agent.id}?set=set1&size=112x112`} size={64} radius="xl" />
-            <Box>
-              <Title order={1} ff="var(--font-heading)">
-                {agent.name}
-              </Title>
-              <Text c="dimmed">{agent.role}</Text>
-              <Group gap={6} mt={6}>
-                <Box
-                  w={8}
-                  h={8}
-                  style={{ borderRadius: '50%', background: statusColor(agent.status) }}
-                  className={agent.status === 'busy' ? 'uss-status-busy' : undefined}
-                />
-                <Text size="xs" c="dimmed" tt="capitalize">
-                  {agent.status}
-                </Text>
-              </Group>
-            </Box>
-          </Group>
-
-          <Menu position="bottom-end" withinPortal>
-            <Menu.Target>
-              <Button
-                variant="light"
-                rightSection={<ChevronDown size={14} />}
-                loading={isMutatingModel}
-                ff="var(--font-mono)"
-              >
-                {agent.model.name}
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              {availableModels.map((model) => (
-                <Menu.Item
-                  key={model.id}
-                  leftSection={model.id === agent.model.id ? <Check size={14} /> : null}
-                  onClick={() => onChangeModel?.(agent.id, model.id)}
-                >
-                  <Stack gap={0}>
-                    <Text size="sm">{model.name}</Text>
-                    <Text size="xs" c="dimmed" ff="var(--font-mono)">
-                      {model.id}
-                    </Text>
-                  </Stack>
-                </Menu.Item>
+          {agent.recentTasks.length === 0 ? (
+            <div className="text-sm text-muted-foreground">No recent tasks.</div>
+          ) : (
+            <div className="divide-y divide-border/60">
+              {agent.recentTasks.map((task) => (
+                <div key={task.id} className="flex items-center justify-between gap-4 py-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    {taskStatusIcon(task.status)}
+                    <div className="truncate text-sm text-foreground">{task.title}</div>
+                  </div>
+                  <div className="font-mono text-xs text-muted-foreground">{relativeTime(task.ranAt)}</div>
+                </div>
               ))}
-            </Menu.Dropdown>
-          </Menu>
-        </Group>
+            </div>
+          )}
+        </SectionCard>
 
-        <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="sm">
-          <Card withBorder>
-            <Text size="xs" c="dimmed" tt="uppercase">
-              Tasks
-            </Text>
-            <Text fw={700} ff="var(--font-mono)" size="xl">
-              {agent.recentTasks.length}
-            </Text>
-            <Text size="xs" c="dimmed">
-              recent runs
-            </Text>
-          </Card>
-          <Card withBorder>
-            <Text size="xs" c="dimmed" tt="uppercase">
-              Skills
-            </Text>
-            <Text fw={700} ff="var(--font-mono)" size="xl">
-              {enabledSkills.length}
-            </Text>
-            <Text size="xs" c="dimmed">
-              of {agent.skills.length} enabled
-            </Text>
-          </Card>
-          <Card withBorder>
-            <Text size="xs" c="dimmed" tt="uppercase">
-              Cost
-            </Text>
-            <Text fw={700} ff="var(--font-mono)" size="xl">
-              ${agent.usageSummary.costUsd.toFixed(2)}
-            </Text>
-            <Text size="xs" c="dimmed">
-              this period
-            </Text>
-          </Card>
-          <Card withBorder>
-            <Text size="xs" c="dimmed" tt="uppercase">
-              Tokens
-            </Text>
-            <Text fw={700} ff="var(--font-mono)" size="xl">
-              {formatTokens(agent.usageSummary.tokens)}
-            </Text>
-            <Text size="xs" c="dimmed">
-              {agent.usageSummary.conversations} conversations
-            </Text>
-          </Card>
-        </SimpleGrid>
+        <SectionCard title="Skills" description="Enabled capabilities and switches.">
+          {agent.skills.length === 0 ? (
+            <div className="text-sm text-muted-foreground">No skills configured.</div>
+          ) : (
+            <div className="divide-y divide-border/60">
+              {agent.skills.map((skill) => (
+                <div key={skill.id} className="flex items-center justify-between gap-4 py-3">
+                  <div className={cn('text-sm', !skill.enabled && 'text-muted-foreground')}>{skill.name}</div>
+                  <Badge variant={skill.enabled ? 'default' : 'secondary'}>{skill.enabled ? 'ON' : 'OFF'}</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </SectionCard>
+      </div>
 
-        <Grid>
-          <Grid.Col span={{ base: 12, lg: 6 }}>
-            <Group justify="space-between" mb="xs">
-              <Text size="xs" c="dimmed" fw={700} ff="var(--font-heading)" tt="uppercase">
-                Recent Tasks
-              </Text>
-              <Button variant="subtle" size="compact-sm" onClick={() => onViewTasks?.(agent.id)}>
-                View all
-              </Button>
-            </Group>
-            <Paper withBorder radius="md" p={0}>
-              {agent.recentTasks.length === 0 ? (
-                <Text p="md" size="sm" c="dimmed">
-                  No recent tasks
-                </Text>
-              ) : (
-                <Stack gap={0}>
-                  {agent.recentTasks.map((task, index) => (
-                    <Box key={task.id} px="md" py="sm">
-                      <Group justify="space-between" wrap="nowrap">
-                        <Group gap="xs" wrap="nowrap">
-                          {taskStatusIcon(task.status)}
-                          <Text size="sm" lineClamp={1}>
-                            {task.title}
-                          </Text>
-                        </Group>
-                        <Text size="xs" c="dimmed" ff="var(--font-mono)">
-                          {relativeTime(task.ranAt)}
-                        </Text>
-                      </Group>
-                      {index < agent.recentTasks.length - 1 && <Divider mt="sm" />}
-                    </Box>
-                  ))}
-                </Stack>
-              )}
-            </Paper>
-          </Grid.Col>
-
-          <Grid.Col span={{ base: 12, lg: 6 }}>
-            <Text size="xs" c="dimmed" fw={700} ff="var(--font-heading)" tt="uppercase" mb="xs">
-              Skills
-            </Text>
-            <Paper withBorder radius="md" p={0}>
-              {agent.skills.length === 0 ? (
-                <Text p="md" size="sm" c="dimmed">
-                  No skills configured
-                </Text>
-              ) : (
-                <Stack gap={0}>
-                  {agent.skills.map((skill, index) => (
-                    <Box key={skill.id} px="md" py="sm">
-                      <Group justify="space-between">
-                        <Text size="sm" c={skill.enabled ? undefined : 'dimmed'}>
-                          {skill.name}
-                        </Text>
-                        <Badge color={skill.enabled ? 'green' : 'gray'} variant="light" size="xs">
-                          {skill.enabled ? 'ON' : 'OFF'}
-                        </Badge>
-                      </Group>
-                      {index < agent.skills.length - 1 && <Divider mt="sm" />}
-                    </Box>
-                  ))}
-                </Stack>
-              )}
-            </Paper>
-          </Grid.Col>
-        </Grid>
-
-        <Box>
-          <Text size="xs" c="dimmed" fw={700} ff="var(--font-heading)" tt="uppercase" mb="xs">
-            Configuration
-          </Text>
-          <Paper withBorder radius="md" p={0} style={{ minHeight: 420 }}>
-            {agent.configDocs.length === 0 ? (
-              <Text p="md" size="sm" c="dimmed">
-                No config docs
-              </Text>
-            ) : (
-              <Grid gutter={0}>
-                <Grid.Col span={{ base: 12, md: 3 }}>
-                  <ScrollArea h={420}>
-                    <Stack gap={0}>
-                      {agent.configDocs.map((doc) => (
-                        <Button
-                          key={doc.filename}
-                          variant={selectedDoc === doc.filename ? 'light' : 'subtle'}
-                          justify="flex-start"
-                          radius={0}
-                          onClick={() => setSelectedDoc(doc.filename)}
-                          ff="var(--font-mono)"
-                          styles={{ root: { borderBottom: '1px solid var(--mantine-color-gray-2)' } }}
-                        >
-                          {doc.filename}
-                        </Button>
-                      ))}
-                    </Stack>
-                  </ScrollArea>
-                </Grid.Col>
-                <Grid.Col span={{ base: 12, md: 9 }}>
-                  <ScrollArea h={420} p="md">
-                    {selectedContent ? (
-                      <MarkdownContent content={selectedContent} />
-                    ) : (
-                      <Text size="sm" c="dimmed">
-                        Select a file
-                      </Text>
-                    )}
-                  </ScrollArea>
-                </Grid.Col>
-              </Grid>
-            )}
-          </Paper>
-        </Box>
-      </Stack>
-    </Box>
+      <SectionCard title="Configuration" description="Rendered configuration docs and agent notes.">
+        {agent.configDocs.length === 0 ? (
+          <div className="text-sm text-muted-foreground">No config docs.</div>
+        ) : (
+          <Tabs defaultValue={agent.configDocs[0]?.filename} value={selectedDoc} onValueChange={setSelectedDoc} className="gap-4">
+            <TabsList className="h-auto w-full justify-start gap-2 rounded-2xl bg-muted/70 p-1">
+              {agent.configDocs.map((doc) => (
+                <TabsTrigger key={doc.filename} value={doc.filename} className="font-mono text-xs">
+                  {doc.filename}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            {agent.configDocs.map((doc) => (
+              <TabsContent key={doc.filename} value={doc.filename}>
+                <ScrollArea className="h-[420px] rounded-2xl border border-border/70 bg-muted/15 p-5">
+                  {selectedContent ? <MarkdownContent content={doc.content} /> : null}
+                </ScrollArea>
+              </TabsContent>
+            ))}
+          </Tabs>
+        )}
+      </SectionCard>
+    </PageContainer>
   )
 }

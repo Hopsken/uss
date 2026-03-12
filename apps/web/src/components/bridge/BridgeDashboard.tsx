@@ -1,116 +1,85 @@
 'use client'
 
-import { Box, Button, Card, Divider, Grid, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core'
 import { ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import type { BridgeResponse } from '@uss/shared'
+import { Button } from '@/components/ui/button'
+import { PageContainer, PageHeader, SectionCard } from '@/components/app/page-shell'
 import { AgentCard } from './AgentCard'
-import { TaskRunRow } from './TaskRunRow'
 import { HealthPanel } from './HealthPanel'
+import { TaskRunRow } from './TaskRunRow'
 import { UsageTile } from './UsageTile'
 
 export function BridgeDashboard({ data }: { data: BridgeResponse }) {
   const router = useRouter()
 
   return (
-    <Box p={{ base: 'md', md: 'xl' }} maw={1100} mx="auto">
-      <Stack gap="lg">
-        {/* Header */}
-        <Box>
-          <Title order={1} ff="var(--font-heading)">Bridge</Title>
-          <Text c="dimmed">Command center overview</Text>
-        </Box>
+    <PageContainer size="wide">
+      <PageHeader eyebrow="Command" title="Bridge" description="Fleet status, task velocity, and system health from a single surface." />
 
-        {/* Fleet Status */}
-        <Card withBorder radius="lg" p="md">
-          <Group justify="space-between" mb="sm">
-            <Text size="xs" fw={700} tt="uppercase" c="slate.6" ff="var(--font-heading)">
-              Fleet Status
-            </Text>
-            <Button
-              variant="subtle"
-              size="compact-sm"
-              rightSection={<ArrowRight size={12} />}
-              onClick={() => router.push('/agents')}
-            >
+      <SectionCard
+        title="Fleet Status"
+        description="Connected agents and their current focus."
+        action={
+          <Button variant="ghost" size="sm" onClick={() => router.push('/agents')}>
+            View all
+            <ArrowRight data-icon="inline-end" />
+          </Button>
+        }
+      >
+        {data.agents.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-6 py-12 text-center text-sm text-muted-foreground">
+            No agents connected.
+          </div>
+        ) : (
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {data.agents.map((agent) => (
+              <AgentCard
+                key={agent.id}
+                agent={agent}
+                onClick={() => router.push(`/agents/${encodeURIComponent(agent.id)}`)}
+              />
+            ))}
+          </div>
+        )}
+      </SectionCard>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,1fr)]">
+        <SectionCard
+          title="Recent Tasks"
+          description="Latest task executions flowing through the bridge."
+          action={
+            <Button variant="ghost" size="sm" onClick={() => router.push('/tasks')}>
               View all
+              <ArrowRight data-icon="inline-end" />
             </Button>
-          </Group>
-
-          {data.agents.length === 0 ? (
-            <Box py="xl" style={{ textAlign: 'center' }}>
-              <Text c="dimmed" size="sm">No agents connected</Text>
-            </Box>
+          }
+        >
+          {data.recentTaskRuns.length === 0 ? (
+            <div className="py-4 text-sm text-muted-foreground">No recent task runs.</div>
           ) : (
-            <Box style={{ overflowX: 'auto' }}>
-              <Group wrap="nowrap" align="stretch" gap="sm">
-                {data.agents.map((agent) => (
-                  <AgentCard
-                    key={agent.id}
-                    agent={agent}
-                    onClick={() => router.push(`/agents/${encodeURIComponent(agent.id)}`)}
-                  />
-                ))}
-              </Group>
-            </Box>
-          )}
-        </Card>
-
-        <Grid>
-          {/* Recent Tasks */}
-          <Grid.Col span={{ base: 12, lg: 7 }}>
-            <Card withBorder radius="lg" p={0}>
-              <Group justify="space-between" p="md">
-                <Text size="xs" fw={700} tt="uppercase" c="slate.6" ff="var(--font-heading)">
-                  Recent Tasks
-                </Text>
-                <Button
-                  variant="subtle"
-                  size="compact-sm"
-                  rightSection={<ArrowRight size={12} />}
+            <div className="divide-y divide-border/60">
+              {data.recentTaskRuns.slice(0, 8).map((run, idx) => (
+                <TaskRunRow
+                  key={run.id}
+                  run={run}
+                  isLast={idx === Math.min(data.recentTaskRuns.length, 8) - 1}
                   onClick={() => router.push('/tasks')}
-                >
-                  View all
-                </Button>
-              </Group>
-              <Divider />
+                />
+              ))}
+            </div>
+          )}
+        </SectionCard>
 
-              {data.recentTaskRuns.length === 0 ? (
-                <Box px="md" py="sm">
-                  <Text size="sm" c="dimmed">No recent task runs</Text>
-                </Box>
-              ) : (
-                <Stack gap={0}>
-                  {data.recentTaskRuns.slice(0, 8).map((run, idx) => (
-                    <TaskRunRow
-                      key={run.id}
-                      run={run}
-                      isLast={idx === Math.min(data.recentTaskRuns.length, 8) - 1}
-                      onClick={() => router.push('/tasks')}
-                    />
-                  ))}
-                </Stack>
-              )}
-            </Card>
-          </Grid.Col>
+        <SectionCard title="System Health" description="Gateway, providers, and recent errors.">
+          <HealthPanel health={data.systemHealth} />
+        </SectionCard>
+      </div>
 
-          {/* System Health */}
-          <Grid.Col span={{ base: 12, lg: 5 }}>
-            <Card withBorder radius="lg" p="md">
-              <Text size="xs" fw={700} tt="uppercase" c="slate.6" ff="var(--font-heading)" mb="sm">
-                System Health
-              </Text>
-              <HealthPanel health={data.systemHealth} />
-            </Card>
-          </Grid.Col>
-        </Grid>
-
-        {/* Usage */}
-        <SimpleGrid cols={{ base: 1, sm: 2 }}>
-          <UsageTile label="Today" period={data.usageSnapshot.today} onClick={() => router.push('/usage')} />
-          <UsageTile label="This Week" period={data.usageSnapshot.thisWeek} onClick={() => router.push('/usage')} />
-        </SimpleGrid>
-      </Stack>
-    </Box>
+      <div className="grid gap-6 md:grid-cols-2">
+        <UsageTile label="Today" period={data.usageSnapshot.today} onClick={() => router.push('/usage')} />
+        <UsageTile label="This Week" period={data.usageSnapshot.thisWeek} onClick={() => router.push('/usage')} />
+      </div>
+    </PageContainer>
   )
 }

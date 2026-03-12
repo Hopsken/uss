@@ -37,19 +37,46 @@ export function createTasksRoutes(controller = tasksController) {
         response: archivedTasksResponseSchema,
       },
     )
-    .post('/tasks', async ({ body }) => controller.postTask(body), {
-      body: createTaskBodySchema,
-      response: mutationResponseSchema,
-    })
+    .post(
+      '/tasks',
+      async ({ body, set }) => {
+        try {
+          return await controller.postTask(body)
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'bad_request'
+          if (message === 'invalid_schedule') {
+            set.status = 400
+            return { error: message }
+          }
+          throw error
+        }
+      },
+      {
+        body: createTaskBodySchema,
+        response: {
+          200: mutationResponseSchema,
+          400: badRequestSchema,
+        },
+      },
+    )
     .patch(
       '/tasks/:taskId',
       async ({ params, body, set }) => {
-        const result = await controller.patchTask(params.taskId, body)
-        if (!result) {
-          set.status = 404
-          return { error: 'not_found' }
+        try {
+          const result = await controller.patchTask(params.taskId, body)
+          if (!result) {
+            set.status = 404
+            return { error: 'not_found' }
+          }
+          return result
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'bad_request'
+          if (message === 'invalid_schedule') {
+            set.status = 400
+            return { error: message }
+          }
+          throw error
         }
-        return result
       },
       {
         params: t.Object({
@@ -58,6 +85,7 @@ export function createTasksRoutes(controller = tasksController) {
         body: updateTaskBodySchema,
         response: {
           200: mutationResponseSchema,
+          400: badRequestSchema,
           404: notFoundSchema,
         },
       },

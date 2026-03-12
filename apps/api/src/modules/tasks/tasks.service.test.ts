@@ -43,8 +43,28 @@ function createLocalRepository(seedTasks: LocalTaskRecord[]): TasksLocalReposito
     listTasks: async () => Array.from(tasks.values()).filter((task) => task.status !== 'archived'),
     listArchivedTasks: async () => Array.from(tasks.values()).filter((task) => task.status === 'archived'),
     getTaskById: async (taskId) => tasks.get(taskId) ?? null,
-    createTask: async () => {
-      throw new Error('not_implemented')
+    createTask: async (params) => {
+      const now = Date.now()
+      const created: LocalTaskRecord = {
+        id: `task-${tasks.size + 1}`,
+        title: params.title,
+        instructionsBase: params.instructionsBase,
+        agentId: params.agentId,
+        status: params.status,
+        schedule: params.schedule,
+        templateId: params.templateId,
+        nextRunAtUtc: params.nextRunAtUtc,
+        lastRunAtUtc: null,
+        lastRunStatus: 'never',
+        lastRunError: null,
+        lockOwner: null,
+        lockUntilUtc: null,
+        createdAt: now,
+        updatedAt: now,
+        cancelledAt: null,
+      }
+      tasks.set(created.id, created)
+      return created
     },
     updateTask: async (taskId, changes) => {
       const current = tasks.get(taskId)
@@ -149,4 +169,25 @@ test('changeStatus archives and restores a task', async () => {
   assert.equal(archived?.ok, true)
   assert.equal(restored?.ok, true)
   assert.equal(dashboard.tasks[0]?.status, 'pending')
+})
+
+test('createTask rejects recurring weekdays schedule without cron expression', async () => {
+  const service = createService([])
+
+  await assert.rejects(
+    () =>
+      service.createTask({
+        title: 'Weekday report',
+        instructions: 'Compile daily report',
+        agentId: 'agent-1',
+        templateId: null,
+        schedule: {
+          type: 'recurring',
+          preset: 'weekdays',
+          timezone: 'America/New_York',
+          humanReadable: 'Every weekday at 9:00 AM (America/New_York)',
+        },
+      }),
+    /invalid_schedule/,
+  )
 })

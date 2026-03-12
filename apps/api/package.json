@@ -20,6 +20,7 @@
     "@uss/gateway-client": "workspace:*",
     "@uss/shared": "workspace:*",
     "better-auth": "^1.5.3",
+    "cron-parser": "^5.5.0",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.41.0",
     "elysia": "^1.1.20",

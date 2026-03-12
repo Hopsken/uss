@@ -1,3 +1,4 @@
+import { CronExpressionParser } from 'cron-parser'
 import type {
   AgendaBucket,
   AgendaState,
@@ -8,6 +9,13 @@ import type {
   TaskStatus,
 } from '@uss/shared'
 import type { LocalTaskRecord, LocalTaskRunRecord } from './tasks.local.repository.js'
+
+type RecurringSchedule = LocalTaskRecord['schedule'] & {
+  type: 'recurring'
+  preset?: 'hourly' | 'weekdays' | 'daily' | 'weekly' | 'monthly' | 'custom'
+  cronExpression?: string
+  timezone?: string
+}
 
 function toIso(ms: number | null): string | null {
   if (!ms) return null
@@ -132,6 +140,37 @@ export function nextStatusAfterSuccess(current: LocalTaskRecord): TaskStatus {
   return 'done'
 }
 
+function computeNextCronRunAtUtc(schedule: RecurringSchedule, fromMs: number): number | null {
+  if (!schedule.cronExpression) return null
+
+  const interval = CronExpressionParser.parse(schedule.cronExpression, {
+    currentDate: new Date(fromMs),
+    tz: schedule.timezone ?? 'UTC',
+  })
+
+  return interval.next().getTime()
+}
+
+export function assertTaskScheduleValid(schedule: LocalTaskRecord['schedule']): void {
+  if (schedule.type === 'one_time') return
+
+  const recurringSchedule = schedule as RecurringSchedule
+
+  const preset = recurringSchedule.preset ?? 'daily'
+  if (recurringSchedule.cronExpression) {
+    try {
+      computeNextCronRunAtUtc(recurringSchedule, Date.now())
+      return
+    } catch {
+      throw new Error('invalid_schedule')
+    }
+  }
+
+  if (preset === 'custom' || preset === 'weekdays') {
+    throw new Error('invalid_schedule')
+  }
+}
+
 export function computeNextRunAtUtc(params: { schedule: LocalTaskRecord['schedule']; fromMs: number }): number | null {
   const { schedule, fromMs } = params
 
@@ -141,7 +180,11 @@ export function computeNextRunAtUtc(params: { schedule: LocalTaskRecord['schedul
     return Number.isFinite(ts) ? ts : fromMs
   }
 
-  const preset = schedule.preset ?? 'daily'
+  const recurringSchedule = schedule as RecurringSchedule
+  const nextCronRunAtUtc = computeNextCronRunAtUtc(recurringSchedule, fromMs)
+  if (nextCronRunAtUtc !== null) return nextCronRunAtUtc
+
+  const preset = recurringSchedule.preset ?? 'daily'
   if (preset === 'hourly') return fromMs + 60 * 60 * 1000
   if (preset === 'daily') return fromMs + 24 * 60 * 60 * 1000
   if (preset === 'weekly') return fromMs + 7 * 24 * 60 * 60 * 1000

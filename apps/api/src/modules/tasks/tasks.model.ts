@@ -23,6 +23,7 @@ export const taskScheduleSchema = t.Object({
   preset: t.Optional(
     t.Union([
       t.Literal('hourly'),
+      t.Literal('weekdays'),
       t.Literal('daily'),
       t.Literal('weekly'),
       t.Literal('monthly'),
@@ -30,6 +31,7 @@ export const taskScheduleSchema = t.Object({
     ]),
   ),
   cronExpression: t.Optional(t.String()),
+  timezone: t.Optional(t.String()),
   humanReadable: t.String(),
 })
 

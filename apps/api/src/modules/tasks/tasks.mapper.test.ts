@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mapTask } from './tasks.mapper.js'
+import { assertTaskScheduleValid, computeNextRunAtUtc, mapTask } from './tasks.mapper.js'
 import type { LocalTaskRecord } from './tasks.local.repository.js'
 
 function makeTask(overrides: Partial<LocalTaskRecord>): LocalTaskRecord {
@@ -133,4 +133,62 @@ test('mapTask suppresses board-derived labels for archived tasks', () => {
   assert.equal(mapped.agendaBucket, undefined)
   assert.equal(mapped.agendaState, undefined)
   assert.equal(mapped.automationStatus, undefined)
+})
+
+test('computeNextRunAtUtc uses cron expression for guided weekday schedules', () => {
+  const nextRunAtUtc = computeNextRunAtUtc({
+    schedule: {
+      type: 'recurring',
+      preset: 'weekdays',
+      cronExpression: '30 9 * * 1-5',
+      timezone: 'America/New_York',
+      humanReadable: 'Every weekday at 9:30 AM (America/New_York)',
+    },
+    fromMs: Date.parse('2026-03-13T12:00:00.000Z'),
+  })
+
+  assert.equal(new Date(nextRunAtUtc ?? 0).toISOString(), '2026-03-13T13:30:00.000Z')
+})
+
+test('computeNextRunAtUtc honors timezone-aware daily schedules after DST shift', () => {
+  const nextRunAtUtc = computeNextRunAtUtc({
+    schedule: {
+      type: 'recurring',
+      preset: 'daily',
+      cronExpression: '0 9 * * *',
+      timezone: 'America/New_York',
+      humanReadable: 'Every day at 9:00 AM (America/New_York)',
+    },
+    fromMs: Date.parse('2026-03-08T12:00:00.000Z'),
+  })
+
+  assert.equal(new Date(nextRunAtUtc ?? 0).toISOString(), '2026-03-08T13:00:00.000Z')
+})
+
+test('computeNextRunAtUtc keeps legacy interval behavior when cron expression is absent', () => {
+  const fromMs = Date.parse('2026-03-12T00:00:00.000Z')
+  const nextRunAtUtc = computeNextRunAtUtc({
+    schedule: {
+      type: 'recurring',
+      preset: 'daily',
+      humanReadable: 'Daily',
+    },
+    fromMs,
+  })
+
+  assert.equal(nextRunAtUtc, fromMs + 24 * 60 * 60 * 1000)
+})
+
+test('assertTaskScheduleValid rejects custom cron when expression is invalid', () => {
+  assert.throws(
+    () =>
+      assertTaskScheduleValid({
+        type: 'recurring',
+        preset: 'custom',
+        cronExpression: 'not a cron',
+        timezone: 'America/New_York',
+        humanReadable: 'Broken cron',
+      }),
+    /invalid_schedule/,
+  )
 })

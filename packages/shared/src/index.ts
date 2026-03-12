@@ -325,7 +325,7 @@ export type AutomationStatus = 'running' | 'attention' | 'due_soon' | 'healthy' 
 export type AgendaBucket = 'overdue' | 'today' | 'upcoming' | 'completed' | 'cancelled'
 export type AgendaState = 'queued' | 'in_progress' | 'blocked' | 'done' | 'cancelled'
 export type AutomationView = 'by_status' | 'by_agent'
-export type SchedulePreset = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom'
+export type SchedulePreset = 'hourly' | 'weekdays' | 'daily' | 'weekly' | 'monthly' | 'custom'
 export type ChangelogEntryType =
   | 'task_created'
   | 'status_changed'
@@ -338,6 +338,7 @@ export type TaskSchedule = {
   scheduledAt?: string
   preset?: SchedulePreset
   cronExpression?: string
+  timezone?: string
   humanReadable: string
 }
 

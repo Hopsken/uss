@@ -14,7 +14,14 @@ import type {
   UpdateTaskTemplateRequest,
 } from '@uss/shared'
 import { logger, type Logger } from '../../infra/logging/logger.js'
-import { mapChangelog, mapRun, mapTask, computeNextRunAtUtc, nextStatusAfterSuccess } from './tasks.mapper.js'
+import {
+  assertTaskScheduleValid,
+  mapChangelog,
+  mapRun,
+  mapTask,
+  computeNextRunAtUtc,
+  nextStatusAfterSuccess,
+} from './tasks.mapper.js'
 import { tasksGatewayRepository, type TasksGatewayRepository } from './tasks.gateway.repository.js'
 import { tasksLocalRepository, type TasksLocalRepository } from './tasks.local.repository.js'
 
@@ -157,6 +164,7 @@ export function createTasksService(deps: TasksServiceDeps): TasksService {
     async createTask(body) {
       await deps.localRepository.ensureTables()
       await ensureAgentExists(deps.gatewayRepository, body.agentId)
+      assertTaskScheduleValid(body.schedule)
 
       const nowMs = Date.now()
       const nextRunAtUtc = computeNextRunAtUtc({
@@ -193,6 +201,9 @@ export function createTasksService(deps: TasksServiceDeps): TasksService {
 
       if (body.agentId) {
         await ensureAgentExists(deps.gatewayRepository, body.agentId)
+      }
+      if (body.schedule) {
+        assertTaskScheduleValid(body.schedule)
       }
 
       const updated = await deps.localRepository.updateTask(taskId, {

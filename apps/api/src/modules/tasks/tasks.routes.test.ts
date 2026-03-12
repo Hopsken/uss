@@ -93,3 +93,38 @@ test('DELETE /v1/tasks/:taskId maps task_running to 400', async () => {
   assert.equal(response.status, 400)
   assert.equal(body.error, 'task_running')
 })
+
+test('POST /v1/tasks maps invalid_schedule to 400', async () => {
+  const app = new Elysia({ prefix: '/v1' }).use(
+    createTasksRoutes({
+      ...createController(),
+      postTask: async () => {
+        throw new Error('invalid_schedule')
+      },
+    }),
+  )
+
+  const response = await app.handle(new Request('http://localhost/v1/tasks', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      title: 'Weekday report',
+      instructions: 'Compile daily report',
+      agentId: 'agent-1',
+      templateId: null,
+      schedule: {
+        type: 'recurring',
+        preset: 'weekdays',
+        cronExpression: '30 9 * * 1-5',
+        timezone: 'America/New_York',
+        humanReadable: 'Every weekday at 9:30 AM (America/New_York)',
+      },
+    }),
+  }))
+  const body = (await response.json()) as { error: string }
+
+  assert.equal(response.status, 400)
+  assert.equal(body.error, 'invalid_schedule')
+})

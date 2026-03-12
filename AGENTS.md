@@ -78,14 +78,6 @@ packages/
 
 ## Design System
 
-- **Colors:** `sky` (primary), `amber` (warnings/busy), `slate` (neutral)
-- **Fonts:** Space Grotesk (headings) · Inter (body) · JetBrains Mono (code)
-- **UI lib:** Mantine v7 + lucide-react icons
-- Loaded from Google Fonts in `app/layout.tsx`
-
-## Implementation Sequence
-
-Product plan lives in `product-plan/`. Milestones: Shell → Bridge → Agents → Tasks → Activity → Usage → Skills. Bridge is implemented; others are placeholders.
 
 ## Gateway Usage Reference
 
